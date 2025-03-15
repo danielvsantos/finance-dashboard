@@ -10,46 +10,36 @@ datasource db {
 model Transaction {
   id              Int      @id @default(autoincrement())
   transaction_date DateTime
-  year            Int
-  quarter         String
-  month           Int
-  day             Int
   categoryId      Int
-  category        Category @relation(fields: [categoryId], references: [id])
-  description     String?
-  credit          Float?
-  debit           Float?
+  description     String
+  details         String?    // Optional
+  credit          Float?     // Optional
+  debit           Float?     // Optional
+  transfer        Boolean    @default(false) // Default to false
   accountId       Int
-  account         Account @relation(fields: [accountId], references: [id])
-  card            String?
-  pl_category     String?
-  created_at      DateTime @default(now())
+  numOfShares     Float?     // Optional
+  price           Float?     // Optional
+  ticker          String?    // Optional
+
+  category        Category @relation(fields: [categoryId], references: [id])
+  account         Account  @relation(fields: [accountId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Account {
-  id          Int      @id @default(autoincrement())
-  account_name String
-  account_type String?
+  id        Int    @id @default(autoincrement())
+  country   String
+  name      String
+
   transactions Transaction[]
-  created_at   DateTime @default(now())
 }
 
 model Category {
-  id           Int      @id @default(autoincrement())
-  category_name String
-  transactions Transaction[]
-  pl_statements PLStatement[]
-  created_at   DateTime @default(now())
-}
+  id         Int    @id @default(autoincrement())
+  name       String
+  plCategory String
 
-model PLStatement {
-  id          Int      @id @default(autoincrement())
-  year        Int
-  quarter     String
-  category    Category @relation(fields: [categoryId], references: [id])
-  categoryId  Int
-  total_credit Float
-  total_debit  Float
-  net_profit   Float
-  created_at  DateTime @default(now())
+  transactions Transaction[]
 }
