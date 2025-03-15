@@ -4,10 +4,6 @@ import axios from "axios";
 export default function TransactionForm({ onTransactionAdded }) {
     const [formData, setFormData] = useState({
         transaction_date: "",
-        year: "",
-        quarter: "",
-        month: "",
-        day: "",
         category_id: "",
         description: "",
         credit: "",
@@ -35,10 +31,6 @@ export default function TransactionForm({ onTransactionAdded }) {
             onTransactionAdded();
             setFormData({
                 transaction_date: "",
-                year: "",
-                quarter: "",
-                month: "",
-                day: "",
                 category_id: "",
                 description: "",
                 credit: "",
@@ -57,26 +49,6 @@ export default function TransactionForm({ onTransactionAdded }) {
             <div className="col-md-6">
                 <label className="form-label">Transaction Date</label>
                 <input type="date" name="transaction_date" value={formData.transaction_date} onChange={handleChange} className="form-control" required />
-            </div>
-
-            <div className="col-md-6">
-                <label className="form-label">Year</label>
-                <input type="number" name="year" placeholder="Year" value={formData.year} onChange={handleChange} className="form-control" required />
-            </div>
-
-            <div className="col-md-6">
-                <label className="form-label">Quarter</label>
-                <input type="text" name="quarter" placeholder="Quarter (Q1, Q2...)" value={formData.quarter} onChange={handleChange} className="form-control" required />
-            </div>
-
-            <div className="col-md-6">
-                <label className="form-label">Month</label>
-                <input type="number" name="month" placeholder="Month" value={formData.month} onChange={handleChange} className="form-control" required />
-            </div>
-
-            <div className="col-md-6">
-                <label className="form-label">Day</label>
-                <input type="number" name="day" placeholder="Day" value={formData.day} onChange={handleChange} className="form-control" required />
             </div>
 
             <div className="col-md-6">
@@ -107,6 +79,11 @@ export default function TransactionForm({ onTransactionAdded }) {
             <div className="col-md-6">
                 <label className="form-label">Card Type</label>
                 <input type="text" name="card" placeholder="Card Type" value={formData.card} onChange={handleChange} className="form-control" />
+            </div>
+
+            <div className="col-md-6">
+                <label className="form-label">P&L Category</label>
+                <input type="text" name="pl_category" placeholder="P&L Category" value={formData.pl_category} onChange={handleChange} className="form-control" required />
             </div>
 
             <button type="submit" className="btn btn-primary mt-3">Submit</button>

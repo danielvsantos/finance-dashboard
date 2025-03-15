@@ -18,38 +18,35 @@ export default async function handler(req, res) {
         }
 
         if (req.method === 'POST') {
-            const { transaction_date, year, quarter, month, day, category_id, description, credit, debit, account_id, card, pl_category } = req.body;
+            const { transaction_date, category_id, description, credit, debit, account_id, card, pl_category } = req.body;
 
-            // ✅ Convert string values to integers/floats
-            const parsedYear = parseInt(year, 10);
-            const parsedMonth = parseInt(month, 10);
-            const parsedDay = parseInt(day, 10);
-            const parsedCategoryId = parseInt(category_id, 10);
-            const parsedAccountId = parseInt(account_id, 10);
-            const parsedCredit = credit ? parseFloat(credit) : null;
-            const parsedDebit = debit ? parseFloat(debit) : null;
-
-            if (isNaN(parsedYear) || isNaN(parsedMonth) || isNaN(parsedDay) || isNaN(parsedCategoryId) || isNaN(parsedAccountId)) {
-                return res.status(400).json({ message: "Invalid data: year, month, day, category_id, and account_id must be numbers" });
+            if (!transaction_date) {
+                return res.status(400).json({ message: "Transaction date is required" });
             }
+
+            const date = new Date(transaction_date);
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1; // Months are 0-based, so +1
+            const day = date.getDate();
+            const quarter = `Q${Math.ceil(month / 3)}`; // Q1-Q4 based on month
 
             const newTransaction = await prisma.transaction.create({
                 data: {
-                    transaction_date: new Date(transaction_date),
-                    year: parsedYear,
+                    transaction_date: date,
+                    year,
                     quarter,
-                    month: parsedMonth,
-                    day: parsedDay,
-                    categoryId: parsedCategoryId,
+                    month,
+                    day,
+                    categoryId: parseInt(category_id, 10),
                     description,
-                    credit: parsedCredit,
-                    debit: parsedDebit,
-                    accountId: parsedAccountId,
+                    credit: credit ? parseFloat(credit) : null,
+                    debit: debit ? parseFloat(debit) : null,
+                    accountId: parseInt(account_id, 10),
                     card,
                     pl_category
                 }
             });
-            
+
             return res.status(201).json(newTransaction);
         }
 
