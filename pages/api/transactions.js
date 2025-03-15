@@ -20,22 +20,36 @@ export default async function handler(req, res) {
         if (req.method === 'POST') {
             const { transaction_date, year, quarter, month, day, category_id, description, credit, debit, account_id, card, pl_category } = req.body;
 
+            // ✅ Convert string values to integers/floats
+            const parsedYear = parseInt(year, 10);
+            const parsedMonth = parseInt(month, 10);
+            const parsedDay = parseInt(day, 10);
+            const parsedCategoryId = parseInt(category_id, 10);
+            const parsedAccountId = parseInt(account_id, 10);
+            const parsedCredit = credit ? parseFloat(credit) : null;
+            const parsedDebit = debit ? parseFloat(debit) : null;
+
+            if (isNaN(parsedYear) || isNaN(parsedMonth) || isNaN(parsedDay) || isNaN(parsedCategoryId) || isNaN(parsedAccountId)) {
+                return res.status(400).json({ message: "Invalid data: year, month, day, category_id, and account_id must be numbers" });
+            }
+
             const newTransaction = await prisma.transaction.create({
                 data: {
                     transaction_date: new Date(transaction_date),
-                    year,
+                    year: parsedYear,
                     quarter,
-                    month,
-                    day,
-                    categoryId: category_id,
+                    month: parsedMonth,
+                    day: parsedDay,
+                    categoryId: parsedCategoryId,
                     description,
-                    credit,
-                    debit,
-                    accountId: account_id,
+                    credit: parsedCredit,
+                    debit: parsedDebit,
+                    accountId: parsedAccountId,
                     card,
                     pl_category
                 }
             });
+            
             return res.status(201).json(newTransaction);
         }
 
