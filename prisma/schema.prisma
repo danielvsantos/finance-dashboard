@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Transaction {
+  id              Int      @id @default(autoincrement())
+  transaction_date DateTime
+  year            Int
+  quarter         String
+  month           Int
+  day             Int
+  categoryId      Int
+  category        Category @relation(fields: [categoryId], references: [id])
+  description     String?
+  credit          Float?
+  debit           Float?
+  accountId       Int
+  account         Account @relation(fields: [accountId], references: [id])
+  card            String?
+  pl_category     String?
+  created_at      DateTime @default(now())
+}
+
+model Account {
+  id          Int      @id @default(autoincrement())
+  account_name String
+  account_type String?
+  transactions Transaction[]
+  created_at   DateTime @default(now())
+}
+
+model Category {
+  id           Int      @id @default(autoincrement())
+  category_name String
+  transactions Transaction[]
+  pl_statements PLStatement[]
+  created_at   DateTime @default(now())
+}
+
+model PLStatement {
+  id          Int      @id @default(autoincrement())
+  year        Int
+  quarter     String
+  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+  total_credit Float
+  total_debit  Float
+  net_profit   Float
+  created_at  DateTime @default(now())
+}
