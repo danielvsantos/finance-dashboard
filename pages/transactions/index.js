@@ -26,12 +26,18 @@ export default function TransactionsPage() {
     }
 
     return (
-        <div>
-            <h1>Transactions</h1>
-            <TransactionForm onTransactionAdded={fetchTransactions} />
-            {loading ? <p>Loading...</p> : (
-                <table border="1">
-                    <thead>
+        <div className="container mt-5">
+            <h1 className="text-primary text-center">Transactions</h1>
+
+            {/* Bootstrap Card for Transaction Form */}
+            <div className="card p-4 shadow mb-4">
+                <TransactionForm onTransactionAdded={fetchTransactions} />
+            </div>
+
+            {/* Bootstrap Table for Transactions */}
+            <div className="table-responsive">
+                <table className="table table-striped table-hover">
+                    <thead className="table-dark">
                         <tr>
                             <th>Date</th>
                             <th>Description</th>
@@ -41,18 +47,28 @@ export default function TransactionsPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {transactions.map((transaction) => (
-                            <tr key={transaction.id}>
-                                <td>{new Date(transaction.transaction_date).toLocaleDateString()}</td>
-                                <td>{transaction.description}</td>
-                                <td>{transaction.credit || "-"}</td>
-                                <td>{transaction.debit || "-"}</td>
-                                <td>{transaction.category?.category_name || "N/A"}</td>
+                        {loading ? (
+                            <tr>
+                                <td colSpan="5" className="text-center">Loading...</td>
                             </tr>
-                        ))}
+                        ) : transactions.length === 0 ? (
+                            <tr>
+                                <td colSpan="5" className="text-center text-muted">No transactions found</td>
+                            </tr>
+                        ) : (
+                            transactions.map((transaction) => (
+                                <tr key={transaction.id}>
+                                    <td>{new Date(transaction.transaction_date).toLocaleDateString()}</td>
+                                    <td>{transaction.description}</td>
+                                    <td>{transaction.credit || "-"}</td>
+                                    <td>{transaction.debit || "-"}</td>
+                                    <td>{transaction.category?.category_name || "N/A"}</td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
-            )}
+            </div>
         </div>
     );
 }

@@ -32,7 +32,7 @@ export default function TransactionForm({ onTransactionAdded }) {
             });
 
             console.log("Transaction Created:", response.data);
-            onTransactionAdded(); // Refresh the transaction list
+            onTransactionAdded();
             setFormData({
                 transaction_date: "",
                 year: "",
@@ -53,21 +53,63 @@ export default function TransactionForm({ onTransactionAdded }) {
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h2>Add New Transaction</h2>
-            <input type="date" name="transaction_date" value={formData.transaction_date} onChange={handleChange} required />
-            <input type="number" name="year" placeholder="Year" value={formData.year} onChange={handleChange} required />
-            <input type="text" name="quarter" placeholder="Quarter (Q1, Q2...)" value={formData.quarter} onChange={handleChange} required />
-            <input type="number" name="month" placeholder="Month" value={formData.month} onChange={handleChange} required />
-            <input type="number" name="day" placeholder="Day" value={formData.day} onChange={handleChange} required />
-            <input type="number" name="category_id" placeholder="Category ID" value={formData.category_id} onChange={handleChange} required />
-            <input type="text" name="description" placeholder="Description" value={formData.description} onChange={handleChange} required />
-            <input type="number" step="0.01" name="credit" placeholder="Credit" value={formData.credit} onChange={handleChange} />
-            <input type="number" step="0.01" name="debit" placeholder="Debit" value={formData.debit} onChange={handleChange} />
-            <input type="number" name="account_id" placeholder="Account ID" value={formData.account_id} onChange={handleChange} required />
-            <input type="text" name="card" placeholder="Card Type" value={formData.card} onChange={handleChange} />
-            <input type="text" name="pl_category" placeholder="P&L Category" value={formData.pl_category} onChange={handleChange} required />
-            <button type="submit">Submit</button>
+        <form onSubmit={handleSubmit} className="row g-3">
+            <div className="col-md-6">
+                <label className="form-label">Transaction Date</label>
+                <input type="date" name="transaction_date" value={formData.transaction_date} onChange={handleChange} className="form-control" required />
+            </div>
+
+            <div className="col-md-6">
+                <label className="form-label">Year</label>
+                <input type="number" name="year" placeholder="Year" value={formData.year} onChange={handleChange} className="form-control" required />
+            </div>
+
+            <div className="col-md-6">
+                <label className="form-label">Quarter</label>
+                <input type="text" name="quarter" placeholder="Quarter (Q1, Q2...)" value={formData.quarter} onChange={handleChange} className="form-control" required />
+            </div>
+
+            <div className="col-md-6">
+                <label className="form-label">Month</label>
+                <input type="number" name="month" placeholder="Month" value={formData.month} onChange={handleChange} className="form-control" required />
+            </div>
+
+            <div className="col-md-6">
+                <label className="form-label">Day</label>
+                <input type="number" name="day" placeholder="Day" value={formData.day} onChange={handleChange} className="form-control" required />
+            </div>
+
+            <div className="col-md-6">
+                <label className="form-label">Category ID</label>
+                <input type="number" name="category_id" placeholder="Category ID" value={formData.category_id} onChange={handleChange} className="form-control" required />
+            </div>
+
+            <div className="col-12">
+                <label className="form-label">Description</label>
+                <input type="text" name="description" placeholder="Description" value={formData.description} onChange={handleChange} className="form-control" required />
+            </div>
+
+            <div className="col-md-6">
+                <label className="form-label">Credit</label>
+                <input type="number" step="0.01" name="credit" placeholder="Credit" value={formData.credit} onChange={handleChange} className="form-control" />
+            </div>
+
+            <div className="col-md-6">
+                <label className="form-label">Debit</label>
+                <input type="number" step="0.01" name="debit" placeholder="Debit" value={formData.debit} onChange={handleChange} className="form-control" />
+            </div>
+
+            <div className="col-md-6">
+                <label className="form-label">Account ID</label>
+                <input type="number" name="account_id" placeholder="Account ID" value={formData.account_id} onChange={handleChange} className="form-control" required />
+            </div>
+
+            <div className="col-md-6">
+                <label className="form-label">Card Type</label>
+                <input type="text" name="card" placeholder="Card Type" value={formData.card} onChange={handleChange} className="form-control" />
+            </div>
+
+            <button type="submit" className="btn btn-primary mt-3">Submit</button>
         </form>
     );
 }
