@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import { getSession } from "next-auth/react";
 
 export default function TransactionForm({ onTransactionAdded }) {
     const [formData, setFormData] = useState({
@@ -30,11 +31,18 @@ export default function TransactionForm({ onTransactionAdded }) {
         e.preventDefault();
         
         console.log("Submitting Transaction Data:", JSON.stringify(formData, null, 2)); // Logs data clearly
-    
+        const session = await getSession(); // Get the session object
+        if (!session) {
+        console.error("No session found. User not authenticated."); 
+        return;
+        }
+
         try {
+            console.log("Submitting Transaction Data:", JSON.stringify(formData, null, 2)); // Logs data clearly
+            
             const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/transactions`, formData, {
                 headers: {
-                    Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_SECRET}`,
+                    Authorization: `Bearer ${session.accessToken}`, // Explicitly send session token
                     "Content-Type": "application/json"
                 }
             });

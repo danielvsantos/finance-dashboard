@@ -1,68 +1,58 @@
-import { PrismaClient } from '@prisma/client';
-import { verifyAuth } from '../../utils/auth';
+import { getSession } from "next-auth/react";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
+    const session = await getSession({ req });
+    if (!session) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+
     try {
-        const isAuthenticated = verifyAuth(req);
-        if (!isAuthenticated) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
-
-        if (req.method === 'GET') {
-            const { name, country } = req.query;
-
-            const accounts = await prisma.account.findMany({
-                where: {
-                    name: name ? { contains: name, mode: "insensitive" } : undefined,
-                    country: country ? { contains: country, mode: "insensitive" } : undefined
-                },
-                include: {
-                    transactions: true
-                }
-            });
-
+        if (req.method === "GET") {
+            const accounts = await prisma.account.findMany();
             return res.status(200).json(accounts);
         }
 
-        if (req.method === 'POST') {
+        if (req.method === "POST") {
             const { name, country } = req.body;
+            if (!name || !country) {
+                return res.status(400).json({ message: "Missing required fields: name and country" });
+            }
 
             const newAccount = await prisma.account.create({
-                data: {
-                    name,
-                    country
-                }
+                data: { name, country }
             });
-
             return res.status(201).json(newAccount);
         }
 
-        if (req.method === 'PUT') {
-            const { id, ...data } = req.body;
+        if (req.method === "PUT") {
+            const { id } = req.query;
+            if (!id || isNaN(id)) {
+                return res.status(400).json({ message: "Invalid or missing account ID" });
+            }
 
             const updatedAccount = await prisma.account.update({
-                where: { id: parseInt(id) },
-                data
+                where: { id: parseInt(id, 10) },
+                data: req.body
             });
-
             return res.status(200).json(updatedAccount);
         }
 
-        if (req.method === 'DELETE') {
-            const { id } = req.body;
+        if (req.method === "DELETE") {
+            const { id } = req.query;
+            if (!id || isNaN(id)) {
+                return res.status(400).json({ message: "Invalid or missing account ID" });
+            }
 
-            await prisma.account.delete({
-                where: { id: parseInt(id) }
-            });
-
-            return res.status(200).json({ message: "Account deleted successfully" });
+            await prisma.account.delete({ where: { id: parseInt(id, 10) } });
+            return res.status(204).end();
         }
 
-        return res.status(405).json({ message: 'Method not allowed' });
+        return res.status(405).json({ message: "Method not allowed" });
     } catch (error) {
-        console.error("Error in accounts API:", error);
-        return res.status(500).json({ message: 'Internal Server Error', error: error.message });
+        console.error("Error in account API:", error);
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 }
