@@ -11,58 +11,58 @@ export default async function handler(req, res) {
         }
 
         if (req.method === 'GET') {
-            const { name, country } = req.query;
+            const { name, plCategory } = req.query;
 
-            const accounts = await prisma.account.findMany({
+            const categories = await prisma.category.findMany({
                 where: {
                     name: name ? { contains: name, mode: "insensitive" } : undefined,
-                    country: country ? { contains: country, mode: "insensitive" } : undefined
+                    plCategory: plCategory ? { contains: plCategory, mode: "insensitive" } : undefined
                 },
                 include: {
                     transactions: true
                 }
             });
 
-            return res.status(200).json(accounts);
+            return res.status(200).json(categories);
         }
 
         if (req.method === 'POST') {
-            const { name, country } = req.body;
+            const { name, plCategory } = req.body;
 
-            const newAccount = await prisma.account.create({
+            const newCategory = await prisma.category.create({
                 data: {
                     name,
-                    country
+                    plCategory
                 }
             });
 
-            return res.status(201).json(newAccount);
+            return res.status(201).json(newCategory);
         }
 
         if (req.method === 'PUT') {
             const { id, ...data } = req.body;
 
-            const updatedAccount = await prisma.account.update({
+            const updatedCategory = await prisma.category.update({
                 where: { id: parseInt(id) },
                 data
             });
 
-            return res.status(200).json(updatedAccount);
+            return res.status(200).json(updatedCategory);
         }
 
         if (req.method === 'DELETE') {
             const { id } = req.body;
 
-            await prisma.account.delete({
+            await prisma.category.delete({
                 where: { id: parseInt(id) }
             });
 
-            return res.status(200).json({ message: "Account deleted successfully" });
+            return res.status(200).json({ message: "Category deleted successfully" });
         }
 
         return res.status(405).json({ message: 'Method not allowed' });
     } catch (error) {
-        console.error("Error in accounts API:", error);
+        console.error("Error in categories API:", error);
         return res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
 }

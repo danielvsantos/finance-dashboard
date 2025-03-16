@@ -43,17 +43,22 @@ export default function TransactionsPage() {
                             <th>Description</th>
                             <th>Credit</th>
                             <th>Debit</th>
+                            <th>Currency</th>
                             <th>Category</th>
+                            <th>P&L Category</th>
+                            <th>Account</th>
+                            <th>Country</th>
+                            <th>Ticker</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan="5" className="text-center">Loading...</td>
+                                <td colSpan="10" className="text-center">Loading...</td>
                             </tr>
                         ) : transactions.length === 0 ? (
                             <tr>
-                                <td colSpan="5" className="text-center text-muted">No transactions found</td>
+                                <td colSpan="10" className="text-center text-muted">No transactions found</td>
                             </tr>
                         ) : (
                             transactions.map((transaction) => (
@@ -62,7 +67,12 @@ export default function TransactionsPage() {
                                     <td>{transaction.description}</td>
                                     <td>{transaction.credit || "-"}</td>
                                     <td>{transaction.debit || "-"}</td>
-                                    <td>{transaction.category?.category_name || "N/A"}</td>
+                                    <td>{transaction.currency || "-"}</td>
+                                    <td>{transaction.category?.name || "N/A"}</td>
+                                    <td>{transaction.category?.plCategory || "N/A"}</td>
+                                    <td>{transaction.account?.name || "N/A"}</td>
+                                    <td>{transaction.account?.country || "N/A"}</td>
+                                    <td>{transaction.ticker || "-"}</td>
                                 </tr>
                             ))
                         )}

@@ -10,11 +10,16 @@ datasource db {
 model Transaction {
   id              Int      @id @default(autoincrement())
   transaction_date DateTime
+  year            Int
+  quarter         String
+  month           Int
+  day             Int
   categoryId      Int
   description     String
   details         String?    // Optional
   credit          Float?     // Optional
   debit           Float?     // Optional
+  currency        String
   transfer        Boolean    @default(false) // Default to false
   accountId       Int
   numOfShares     Float?     // Optional

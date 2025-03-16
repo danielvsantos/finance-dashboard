@@ -5,22 +5,30 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContai
 export default function Dashboard() {
     const [transactions, setTransactions] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
-    const [filters, setFilters] = useState({ year: "", month: "", quarter: "" });
+    const [filters, setFilters] = useState({
+        year: "",
+        month: "",
+        quarter: "",
+        categoryName: "",
+        plCategory: "",
+        accountName: "",
+        accountCountry: "",
+        transfer: "",
+        details: "",
+        currency: ""
+    });
 
     useEffect(() => {
         fetchTransactions();
-    }, []);
-
-    useEffect(() => {
-        filterTransactions();
-    }, [filters, transactions]);
+    }, [filters]);
 
     async function fetchTransactions() {
         try {
             const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/transactions`, {
                 headers: {
                     Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_SECRET}`
-                }
+                },
+                params: filters
             });
             setTransactions(response.data);
         } catch (error) {
@@ -28,23 +36,7 @@ export default function Dashboard() {
         }
     }
 
-    function filterTransactions() {
-        let filtered = transactions;
-
-        if (filters.year) {
-            filtered = filtered.filter(tx => tx.year.toString() === filters.year);
-        }
-        if (filters.month) {
-            filtered = filtered.filter(tx => tx.month.toString() === filters.month);
-        }
-        if (filters.quarter) {
-            filtered = filtered.filter(tx => tx.quarter === filters.quarter);
-        }
-
-        setFilteredData(filtered);
-    }
-
-    const chartData = filteredData.reduce((acc, tx) => {
+    const chartData = transactions.reduce((acc, tx) => {
         const date = new Date(tx.transaction_date).toLocaleDateString();
         const existingEntry = acc.find(entry => entry.date === date);
 
@@ -63,35 +55,18 @@ export default function Dashboard() {
 
             {/* Filters */}
             <div className="row mb-4">
-                <div className="col-md-4">
-                    <label className="form-label">Year</label>
-                    <select className="form-control" onChange={(e) => setFilters({ ...filters, year: e.target.value })}>
-                        <option value="">All</option>
-                        {[...new Set(transactions.map(tx => tx.year))].map(year => (
-                            <option key={year} value={year}>{year}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="col-md-4">
-                    <label className="form-label">Month</label>
-                    <select className="form-control" onChange={(e) => setFilters({ ...filters, month: e.target.value })}>
-                        <option value="">All</option>
-                        {[...new Set(transactions.map(tx => tx.month))].map(month => (
-                            <option key={month} value={month}>{month}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="col-md-4">
-                    <label className="form-label">Quarter</label>
-                    <select className="form-control" onChange={(e) => setFilters({ ...filters, quarter: e.target.value })}>
-                        <option value="">All</option>
-                        {[...new Set(transactions.map(tx => tx.quarter))].map(quarter => (
-                            <option key={quarter} value={quarter}>{quarter}</option>
-                        ))}
-                    </select>
-                </div>
+                {Object.keys(filters).map((filterKey) => (
+                    <div className="col-md-4" key={filterKey}>
+                        <label className="form-label">{filterKey.replace(/([A-Z])/g, " $1").trim()}</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder={filterKey}
+                            value={filters[filterKey]}
+                            onChange={(e) => setFilters({ ...filters, [filterKey]: e.target.value })}
+                        />
+                    </div>
+                ))}
             </div>
 
             {/* Graph */}
