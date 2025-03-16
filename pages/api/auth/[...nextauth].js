@@ -15,7 +15,7 @@ export default NextAuth({
             return session;
         },
         async redirect({ url, baseUrl }) {
-            return `${baseUrl}/home`; // Redirect users to /home after login
+            return `${baseUrl}/`; // Redirect users to / after login
         }
     }
 });

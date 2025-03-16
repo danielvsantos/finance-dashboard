@@ -16,7 +16,7 @@ A financial management dashboard for tracking transactions, accounts, categories
 
 ## Pages & Objectives
 
-### **1. Home (`/home`)**
+### **1. Home (`/`)**
 The landing page after login, providing navigation buttons to different sections.
 
 ### **2. Transactions (`/transactions`)**
