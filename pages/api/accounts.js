@@ -1,14 +1,17 @@
-import { getSession } from "next-auth/react";
+import { getToken } from "next-auth/jwt";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
-    const session = await getSession({ req });
-    if (!session) {
-        return res.status(401).json({ message: "Unauthorized" });
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    
+    if (!token) {
+        console.error("Unauthorized request - No valid token found.");
+        return res.status(401).json({ message: "Unauthorized - Please log in" });
     }
-
+    
+    console.log("Authenticated User:", token);
     try {
         if (req.method === "GET") {
             const accounts = await prisma.account.findMany();
