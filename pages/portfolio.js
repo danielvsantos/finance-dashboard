@@ -49,21 +49,27 @@ export default function Portfolio() {
         try {
             const prices = {};
             for (const ticker of tickers) {
-                const response = await axios.get(`https://www.alphavantage.co/query`, {
-                    params: {
-                        function: "GLOBAL_QUOTE",
-                        symbol: ticker,
-                        apikey: process.env.NEXT_PUBLIC_ALPHA_VANTAGE_API_KEY
-                    }
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/stockPrices`, {
+                    params: { ticker }
                 });
-                const price = response?.data?.["Global Quote"]?.["05. price"] || 0;
-                prices[ticker] = parseFloat(price);
+                prices[ticker] = response.data.price;
             }
             setCurrentPrices(prices);
         } catch (error) {
             console.error("Error fetching stock prices:", error);
         }
     }
+
+    // Calculate total portfolio value
+    const totalPortfolioValue = stocks.reduce((acc, stock) => {
+        const totalValue = (currentPrices[stock.ticker] || 0) * stock.shares;
+        return acc + totalValue;
+    }, 0);
+
+    // Helper function to format numbers with thousand separators
+    const formatCurrency = (value) => {
+        return `$${Math.round(value).toLocaleString()}`;
+    };
 
     return (
         <div className="container mt-5">
@@ -85,19 +91,29 @@ export default function Portfolio() {
                                 <td colSpan="5" className="text-center text-muted">No stocks held</td>
                             </tr>
                         ) : (
-                            stocks.map(stock => (
-                                <tr key={stock.ticker}>
-                                    <td>{stock.ticker}</td>
-                                    <td>{stock.account}</td>
-                                    <td>{stock.shares}</td>
-                                    <td>${currentPrices[stock.ticker]?.toFixed(2) || "Loading..."}</td>
-                                    <td>
-                                        ${((currentPrices[stock.ticker] || 0) * stock.shares).toFixed(2)}
-                                    </td>
-                                </tr>
-                            ))
+                            stocks.map(stock => {
+                                const totalValue = (currentPrices[stock.ticker] || 0) * stock.shares;
+                                return (
+                                    <tr key={stock.ticker}>
+                                        <td>{stock.ticker}</td>
+                                        <td>{stock.account}</td>
+                                        <td>{stock.shares}</td>
+                                        <td>${currentPrices[stock.ticker]?.toFixed(2) || "Loading..."}</td>
+                                        <td>{formatCurrency(totalValue)}</td>
+                                    </tr>
+                                );
+                            })
                         )}
                     </tbody>
+                    {/* Totalizer Row */}
+                    {stocks.length > 0 && (
+                        <tfoot>
+                            <tr className="table-dark">
+                                <td colSpan="4" className="text-end"><strong>Total Portfolio Value:</strong></td>
+                                <td><strong>{formatCurrency(totalPortfolioValue)}</strong></td>
+                            </tr>
+                        </tfoot>
+                    )}
                 </table>
             </div>
         </div>

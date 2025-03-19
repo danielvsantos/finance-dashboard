@@ -48,3 +48,11 @@ model Category {
 
   transactions Transaction[]
 }
+
+model StockPrice {
+  id        Int      @id @default(autoincrement())
+  ticker    String   @unique
+  price     Float
+  lastUpdated DateTime @default(now())
+}
+

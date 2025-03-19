@@ -63,7 +63,7 @@ export default function TransactionsPage() {
                         ) : (
                             transactions.map((transaction) => (
                                 <tr key={transaction.id}>
-                                    <td>{new Date(transaction.transaction_date).toLocaleDateString()}</td>
+                                    <td>{new Date(transaction.transaction_date).toLocaleDateString('en-GB')}</td>
                                     <td>{transaction.description}</td>
                                     <td>{transaction.credit || "-"}</td>
                                     <td>{transaction.debit || "-"}</td>
