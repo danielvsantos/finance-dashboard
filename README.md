@@ -212,6 +212,7 @@ Ensure that all **environment variables** are correctly set in **Vercel’s proj
 - Enhance security with **role-based access control (RBAC)**.
 - Add **P&L page** with transactions grouped
 - Improving filtering capabilities and graphs on **Dashboard**
+- Add **import functionality** to transactions page
 
 ---
 
