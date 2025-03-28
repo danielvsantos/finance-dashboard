@@ -19,13 +19,13 @@ export default async function handler(req, res) {
         }
 
         if (req.method === "POST") {
-            const { name, plCategory } = req.body;
-            if (!name || !plCategory) {
-                return res.status(400).json({ message: "Missing required fields: name and plCategory" });
+            const { name, plCategory, plMacroCategory } = req.body;
+            if (!name || !plCategory || !plMacroCategory) {
+                return res.status(400).json({ message: "Missing required fields: name, plCategory, plMacroCategory" });
             }
 
             const newCategory = await prisma.category.create({
-                data: { name, plCategory }
+                data: { name, plCategory, plMacroCategory }
             });
             return res.status(201).json(newCategory);
         }

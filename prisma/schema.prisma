@@ -45,6 +45,7 @@ model Category {
   id         Int    @id @default(autoincrement())
   name       String
   plCategory String
+  plMacroCategory String?
 
   transactions Transaction[]
 }
@@ -56,3 +57,30 @@ model StockPrice {
   lastUpdated DateTime @default(now())
 }
 
+
+model AnalyticsCacheMonthly {
+  id                Int      @id @default(autoincrement())
+  year              Int
+  month             Int
+  currency          String
+  country           String
+  revenue           Float
+  expenses          Float
+  revenueOriginal   Float
+  expensesOriginal  Float
+  data              Json
+  updatedAt         DateTime @updatedAt
+
+  @@unique([year, month, currency, country], name: "year_month_currency_country")
+}
+
+model CurrencyRate {
+  id           Int      @id @default(autoincrement())
+  year         Int
+  month        Int
+  fromCurrency String
+  toUSD        Float
+  updatedAt    DateTime @default(now())
+
+  @@unique([year, month, fromCurrency], name: "year_month_fromCurrency")
+}

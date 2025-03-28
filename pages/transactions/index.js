@@ -49,6 +49,8 @@ export default function TransactionsPage() {
                             <th>Account</th>
                             <th>Country</th>
                             <th>Ticker</th>
+                            <th># of Shares</th>
+                            <th>Price</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -73,6 +75,8 @@ export default function TransactionsPage() {
                                     <td>{transaction.account?.name || "N/A"}</td>
                                     <td>{transaction.account?.country || "N/A"}</td>
                                     <td>{transaction.ticker || "-"}</td>
+                                    <td>{transaction.numOfShares || "-"}</td>
+                                    <td>{transaction.price || "-"}</td>
                                 </tr>
                             ))
                         )}

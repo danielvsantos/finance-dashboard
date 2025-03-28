@@ -40,6 +40,7 @@ export default function CategoriesPage() {
                             <th>ID</th>
                             <th>Name</th>
                             <th>P&L Category</th>
+                            <th>P&L Macro Category</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -53,6 +54,7 @@ export default function CategoriesPage() {
                                     <td>{category.id}</td>
                                     <td>{category.name}</td>
                                     <td>{category.plCategory}</td>
+                                    <td>{category.plMacroCategory}</td>
                                 </tr>
                             ))
                         )}

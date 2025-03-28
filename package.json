@@ -7,16 +7,19 @@
     "build": "prisma generate --no-engine && next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate --no-engine"
+    "postinstall": "prisma generate --no-engine",
+    "update-analytics-cache": "node scripts/updateAnalyticsCache.js"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
     "axios": "^1.8.3",
     "bootstrap": "^5.3.3",
+    "date-fns": "^4.1.0",
     "next": "^15.2.4",
     "next-auth": "^4.24.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-select": "^5.10.1",
     "react-table": "^7.8.0",
     "recharts": "^2.15.1"
   },
