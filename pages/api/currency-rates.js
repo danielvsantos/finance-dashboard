@@ -1,110 +1,203 @@
-import { getToken } from "next-auth/jwt";
-import { PrismaClient } from "@prisma/client";
-
-
-
-const prisma = new PrismaClient();
+import { getToken } from 'next-auth/jwt';
+import prisma from '../../prisma/prisma.js';
+import { StatusCodes } from 'http-status-codes';
+import * as Sentry from '@sentry/nextjs';
 
 export default async function handler(req, res) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    
-    if (!token) {
-        console.error("Unauthorized request - No valid token found.");
-        return res.status(401).json({ message: "Unauthorized - Please log in" });
-    }
-    
-    console.log("Authenticated User:", token);
+  
     try {
-        if (req.method === "GET") {
-            const { year, month, fromCurrency } = req.query;
+  
+      const session = await getToken({ req });
+      if (!session) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ error: 'Unauthorized' });
+      }
+  
+      switch (req.method) {
+        case 'GET':
+          return handleGet(req, res, session);
+        case 'POST':
+          return handlePost(req, res, session);
+        case 'PUT':
+          return handlePut(req, res, session);
+        case 'DELETE':
+          return handleDelete(req, res, session);
+        default:
+          res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
+          return res.status(StatusCodes.METHOD_NOT_ALLOWED).end();
+      }
+    } catch (error) {
+      Sentry.captureException(error);
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: 'Server Error',
+        ...(process.env.NODE_ENV === 'development' && { details: error.message }),
+      });
+    }
+  }
 
-            const filters = {};
+async function handleGet(req, res) {
+    const { id } = req.query;
+  
+    if (id) {
+      const currencyRateId = parseInt(id, 10);
+      if (isNaN(currencyRateId)) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Invalid currency rate ID' });
+      }
+  
+      const currencyRate = await prisma.currencyRate.findUnique({
+        where: { id: currencyRateId }
+      });
+  
+      if (!currencyRate) {
+        return res.status(StatusCodes.NOT_FOUND).json({ error: 'Currency Rate not found' });
+      }
+  
+      return res.status(StatusCodes.OK).json(currencyRate);
+    }
+    const { year, month, fromCurrency } = req.query;
+
+    const filters = {};
             if (year) filters.year = parseInt(year);
             if (month) filters.month = parseInt(month);
             if (fromCurrency) filters.fromCurrency = fromCurrency.toUpperCase();
 
-            const rates = await prisma.currencyRate.findMany({ where: filters });
-            return res.status(200).json(rates);
-        }
+    const currencyRate = await prisma.currencyRate.findMany({
+        where: filters,
+        orderBy: { id: 'asc' }
 
-        if (req.method === "POST") {
-            const { year, month, fromCurrency, toUSD } = req.body;
+    });
+  
+    return res.status(StatusCodes.OK).json(currencyRate);
+  }
 
-            if (!year || !month || !fromCurrency || !toUSD) {
-                return res.status(400).json({ message: "Missing required fields" });
-            }
 
-            const rate = await prisma.currencyRate.upsert({
-                where: {
-                    year_month_fromCurrency: {
-                        year: parseInt(year),
-                        month: parseInt(month),
-                        fromCurrency: fromCurrency.toUpperCase()
-                    }
-                },
-                update: {
-                    toUSD: parseFloat(toUSD),
-                    updatedAt: new Date()
-                },
-                create: {
-                    year: parseInt(year),
-                    month: parseInt(month),
-                    fromCurrency: fromCurrency.toUpperCase(),
-                    toUSD: parseFloat(toUSD)
-                }
-            });
-
-            return res.status(200).json({ message: "Currency rate saved", rate });
-        }
-
-        if (req.method === "PUT") {
-            const { year, month, fromCurrency, toUSD } = req.body;
-
-            if (!year || !month || !fromCurrency || !toUSD) {
-                return res.status(400).json({ message: "Missing required fields" });
-            }
-
-            const updated = await prisma.currencyRate.update({
-                where: {
-                    year_month_fromCurrency: {
-                        year: parseInt(year),
-                        month: parseInt(month),
-                        fromCurrency: fromCurrency.toUpperCase()
-                    }
-                },
-                data: {
-                    toUSD: parseFloat(toUSD),
-                    updatedAt: new Date()
-                }
-            });
-
-            return res.status(200).json({ message: "Currency rate updated", updated });
-        }
-
-        if (req.method === "DELETE") {
-            const { year, month, fromCurrency } = req.body;
-
-            if (!year || !month || !fromCurrency) {
-                return res.status(400).json({ message: "Missing required fields" });
-            }
-
-            await prisma.currencyRate.delete({
-                where: {
-                    year_month_fromCurrency: {
-                        year: parseInt(year),
-                        month: parseInt(month),
-                        fromCurrency: fromCurrency.toUpperCase()
-                    }
-                }
-            });
-
-            return res.status(200).json({ message: "Currency rate deleted" });
-        }
-
-        return res.status(405).json({ message: "Method not allowed" });
-
-    } catch (error) {
-        console.error("Error in currency rate API:", error);
-        return res.status(500).json({ message: "Internal server error", error: error.message });
+async function handlePost(req, res, session) {
+    try {
+    const { year, month, fromCurrency, toUSD } = req.body;
+    if (!year || !month || !fromCurrency || !toUSD ) {
+        return res.status(400).json({ message: "Missing required fields: year, month, fromCurrency, toUSD" });
     }
-}
+  
+    const newCurrencyRate = await prisma.currencyRate.upsert({
+        where: {
+            year_month_fromCurrency: {
+                year: parseInt(year),
+                month: parseInt(month),
+                fromCurrency: fromCurrency.toUpperCase()
+            }
+        },
+        update: {
+            toUSD: parseFloat(toUSD),
+            updatedAt: new Date()
+        },
+        create: {
+            year: parseInt(year),
+            month: parseInt(month),
+            fromCurrency: fromCurrency.toUpperCase(),
+            toUSD: parseFloat(toUSD)
+        }
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: session.email,
+        action: "CREATE",
+        table: "Currency Rate",
+        recordId: newCurrencyRate.id,
+      },
+    });
+    return res.status(StatusCodes.CREATED).json(newCurrencyRate);
+  }
+  catch (error) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      error: 'Validation Failed',
+      details: error.message,
+    });
+  }
+  }
+
+
+
+async function handlePut(req, res, session) {
+    try {
+      const { id } = req.query;
+      const { year, month, fromCurrency, toUSD } = req.body;
+      const currencyRateId = parseInt(id, 10);
+      if (isNaN(currencyRateId)) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Invalid currency rate ID' });
+      }
+  
+      const existingCurrencyRate = await prisma.currencyRate.findUnique({
+        where: { id: currencyRateId },
+      });
+  
+      if (!existingCurrencyRate) {
+        return res.status(StatusCodes.NOT_FOUND).json({ error: 'Currency Rate not found' });
+      }
+      
+      const updated = await prisma.currencyRate.update({
+        where: {
+            year_month_fromCurrency: {
+                year: parseInt(year),
+                month: parseInt(month),
+                fromCurrency: fromCurrency.toUpperCase()
+            }
+        },
+        data: {
+            toUSD: parseFloat(toUSD),
+            updatedAt: new Date()
+        }
+    });
+    await prisma.auditLog.create({
+      data: {
+        userId: session.email,
+        action: "UPDATE",
+        table: "Currency Rate",
+        recordId: updated.id,
+      },
+    });
+    return res.status(StatusCodes.OK).json(updated);
+  }
+  catch (error) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      error: 'Validation Failed',
+      details: error.message,
+    });
+  }
+  }
+
+async function handleDelete(req, res, session) {
+    try {
+      const { id } = req.query;
+      const currencyRateId = parseInt(id, 10);
+      if (isNaN(currencyRateId)) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Invalid currency Rate ID' });
+      }
+  
+      const existingCurrencyRate = await prisma.currencyRate.findUnique({
+        where: { id: currencyRateId },
+      });
+  
+      if (!existingCurrencyRate) {
+        return res.status(StatusCodes.NOT_FOUND).json({ error: 'Currency Rate not found' });
+      }
+      
+    const deleted = await prisma.currencyRate.delete({
+        where: { id: parseInt(id, 10) },
+    });
+    await prisma.auditLog.create({
+      data: {
+        userId: session.email,
+        action: "DELETE",
+        table: "Currency Rate",
+        recordId: deleted.id,
+      },
+    });
+    return res.status(StatusCodes.NO_CONTENT).end();
+  }
+  catch (error) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      error: 'Deletion Failed',
+      details: error.message,
+    });
+  }
+  }

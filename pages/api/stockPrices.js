@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from '../../prisma/prisma.js';
 import axios from "axios";
 
-const prisma = new PrismaClient();
+
 
 export default async function handler(req, res) {
     const { ticker } = req.query;
