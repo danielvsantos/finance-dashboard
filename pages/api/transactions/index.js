@@ -1,5 +1,5 @@
 import { getToken } from 'next-auth/jwt';
-import prisma from '../../prisma/prisma.js';
+import prisma from '../../../prisma/prisma.js';
 import { StatusCodes } from 'http-status-codes';
 import * as Sentry from '@sentry/nextjs';
 

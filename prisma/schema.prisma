@@ -90,6 +90,16 @@ model CurrencyRate {
 
 }
 
+model PortfolioHolding {
+  id         Int     @id @default(autoincrement())
+  account    String
+  category   String
+  ticker     String
+  sharesHeld Float
+
+  @@unique([account, category, ticker], name: "unique_portfolio_holding")
+}
+
 model AuditLog {
   id        Int      @id @default(autoincrement())
   action    String
