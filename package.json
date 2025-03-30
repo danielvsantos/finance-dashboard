@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate --no-engine",
-    "update-analytics-cache": "node scripts/updateAnalyticsCache.js"
+    "update-analytics-cache": "node scripts/updateAnalyticsCache.mjs",
+    "check-missing-currency-rates": "node scripts/checkMissingCurrencyRates.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",

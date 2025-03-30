@@ -63,31 +63,30 @@ model StockPrice {
 }
 
 model AnalyticsCacheMonthly {
-  id                Int      @id @default(autoincrement())
-  year              Int
-  month             Int
-  currency          String
-  country           String
-  revenue           Float
-  expenses          Float
-  revenueOriginal   Float
-  expensesOriginal  Float
-  data              Json
-  updatedAt         DateTime @updatedAt
+  id               Int      @id @default(autoincrement())
+  year             Int
+  month            Int
+  currency         String
+  country          String
+  plMacroCategory  String
+  revenue          Float
+  expenses         Float
+  data             Json
+  updatedAt        DateTime @updatedAt
 
-  @@unique([year, month, currency, country], name: "year_month_currency_country")
-
+  @@unique([year, month, currency, country, plMacroCategory], name: "year_month_currency_country_plMacroCategory")
 }
 
 model CurrencyRate {
   id           Int      @id @default(autoincrement())
   year         Int
   month        Int
-  fromCurrency String
-  toUSD        Float
+  currencyFrom String
+  currencyTo   String
+  value        Float
   updatedAt    DateTime @default(now())
 
-  @@unique([year, month, fromCurrency], name: "year_month_fromCurrency")
+  @@unique([year, month, currencyFrom, currencyTo], name: "year_month_currencyFrom_currencyTo")
 
 }
 

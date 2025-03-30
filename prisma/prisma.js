@@ -62,18 +62,26 @@ prisma.$use(async (params, next) => {
     if (model === 'CurrencyRate' && (action === 'create' || action === 'update')) {
         const data = args.data;
 
-        if (data.fromCurrency && !/^[A-Z]{3}$/.test(data.fromCurrency)) {
-            throw new Error('Invalid currency code: Must be a valid ISO code.');
-        }
-
-        if (data.toUSD && data.toUSD <= 0) {
-            throw new Error('Conversion rate to USD must be positive.');
-        }
-
-        if (data.month && (data.month < 1 || data.month >12)) {
-            throw new Error('Month must be between January(1) and December(12).');
-        }
+    if (data.currencyFrom && !/^[A-Z]{3}$/.test(data.currencyFrom)) {
+        throw new Error('Invalid currencyFrom code: Must be a valid ISO 3-letter currency code.');
     }
+
+    if (data.currencyTo && !/^[A-Z]{3}$/.test(data.currencyTo)) {
+        throw new Error('Invalid currencyTo code: Must be a valid ISO 3-letter currency code.');
+    }
+
+    if (data.value !== undefined && data.value <= 0) {
+        throw new Error('Conversion rate value must be a positive number.');
+    }
+
+    if (data.month !== undefined && (data.month < 1 || data.month > 12)) {
+        throw new Error('Month must be between 1 and 12.');
+    }
+
+    if (data.year !== undefined && (data.year < 1900 || data.year > 2100)) {
+        throw new Error('Year must be a valid 4-digit number.');
+    }
+}
 
     return next(params);
 });
