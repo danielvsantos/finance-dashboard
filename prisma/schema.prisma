@@ -16,29 +16,32 @@ model Transaction {
   day             Int
   categoryId      Int
   description     String
-  details         String?    // Optional
-  credit          Float?     // Optional
-  debit           Float?     // Optional
+  details         String?
+  credit          Float?
+  debit           Float?
   currency        String
-  transfer        Boolean    @default(false) // Default to false
+  transfer        Boolean @default(false)
   accountId       Int
-  numOfShares     Float?     // Optional
-  price           Float?     // Optional
-  ticker          String?    // Optional
+  numOfShares     Float?
+  price           Float?
+  ticker          String?
+  userId          String?
 
-  category        Category @relation(fields: [categoryId], references: [id])
-  account         Account  @relation(fields: [accountId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  account  Account  @relation(fields: [accountId], references: [id])
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
   id        Int    @id @default(autoincrement())
   country   String
   name      String
-
   transactions Transaction[]
+
+  @@index([country])
+  @@index([name])
 }
 
 model Category {
@@ -46,8 +49,10 @@ model Category {
   name       String
   plCategory String
   plMacroCategory String?
-
   transactions Transaction[]
+
+  @@unique([name], name: "category_name")
+  @@index([plCategory])
 }
 
 model StockPrice {
@@ -56,7 +61,6 @@ model StockPrice {
   price     Float
   lastUpdated DateTime @default(now())
 }
-
 
 model AnalyticsCacheMonthly {
   id                Int      @id @default(autoincrement())
@@ -72,6 +76,7 @@ model AnalyticsCacheMonthly {
   updatedAt         DateTime @updatedAt
 
   @@unique([year, month, currency, country], name: "year_month_currency_country")
+
 }
 
 model CurrencyRate {
@@ -83,4 +88,14 @@ model CurrencyRate {
   updatedAt    DateTime @default(now())
 
   @@unique([year, month, fromCurrency], name: "year_month_fromCurrency")
+
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  table     String
+  userId    String
+  recordId  Int
+  createdAt DateTime @default(now())
 }

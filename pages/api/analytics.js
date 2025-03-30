@@ -1,7 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from '../../prisma/prisma.js';
 import { getToken } from "next-auth/jwt";
 
-const prisma = new PrismaClient();
+
+
 
 export default async function handler(req, res) {
   const token = await getToken({ req });
