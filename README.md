@@ -1,6 +1,6 @@
-# 📘 Finance Dashboard - README
+# 💰 Finance Dashboard
 
-A full-featured personal finance dashboard to track transactions, portfolios, expenses, and generate analytics such as P&L statements across multiple currencies and countries.
+A full-featured personal finance management system to track transactions, portfolios, and generate analytics (P&L, dashboards) across multiple currencies and countries.
 
 ---
 
@@ -29,7 +29,6 @@ model Transaction {
 
   category        Category @relation(fields: [categoryId], references: [id])
   account         Account  @relation(fields: [accountId], references: [id])
-
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -64,29 +63,29 @@ model CurrencyRate {
   id           Int    @id @default(autoincrement())
   year         Int
   month        Int
-  fromCurrency String
-  toUSD        Float
+  currencyFrom String
+  currencyTo   String
+  value        Float
 
-  @@unique([year, month, fromCurrency])
+  @@unique([year, month, currencyFrom, currencyTo])
 }
 ```
 
 ### 📊 AnalyticsCacheMonthly
 ```prisma
 model AnalyticsCacheMonthly {
-  id               Int    @id @default(autoincrement())
-  year             Int
-  month            Int
-  country          String
-  currency         String
-  revenue          Float
-  expenses         Float
-  revenueOriginal  Float
-  expensesOriginal Float
-  data             Json
-  updatedAt        DateTime @updatedAt
+  id              Int      @id @default(autoincrement())
+  year            Int
+  month           Int
+  country         String
+  currency        String
+  plMacroCategory String
+  revenue         Float
+  expenses        Float
+  data            Json
+  updatedAt       DateTime @updatedAt
 
-  @@unique([year, month, country, currency], name: "year_month_currency_country")
+  @@unique([year, month, country, currency, plMacroCategory], name: "unique_cache_key")
 }
 ```
 
@@ -100,49 +99,54 @@ model StockPrice {
 }
 ```
 
+### 📦 Portfolio
+```prisma
+model Portfolio {
+  id        Int    @id @default(autoincrement())
+  account   String
+  category  String
+  ticker    String
+  shares    Float
+
+  @@unique([account, category, ticker])
+}
+```
+
 ---
 
-## 🧭 Pages Overview
+## 📄 Pages Overview
 
-| Page         | Path             | Description                                    |
-|--------------|------------------|------------------------------------------------|
-| Home         | `/home`          | Navigation hub                                 |
-| Transactions | `/transactions`  | Add/view transactions                          |
-| Accounts     | `/accounts`      | Manage bank accounts                           |
-| Categories   | `/categories`    | Manage category mappings                       |
-| Portfolio    | `/portfolio`     | Track current stock holdings                   |
-| P&L          | `/pnl`           | Generate profit & loss across countries        |
-| Dashboard    | `/dashboard`     | Visualize expense trends (TBD)                 |
-| Currency     | `/currency`      | Add exchange rates by year & month            |
+| Page          | Path           | Description                               |
+|---------------|----------------|-------------------------------------------|
+| Home          | `/home`        | Navigation hub                            |
+| Transactions  | `/transactions`| Add/view transactions                     |
+| Accounts      | `/accounts`    | Manage bank accounts                      |
+| Categories    | `/categories`  | Manage category mappings                  |
+| Portfolio     | `/portfolio`   | Track current stock holdings              |
+| P&L           | `/pnl`         | Generate profit & loss view               |
+| Currency      | `/currency`    | Add/view currency exchange rates          |
+| Dashboard     | `/dashboard`   | (Upcoming) Visualize expense trends       |
 
 ---
 
 ## 🔐 Authentication
 
-- Google OAuth with [NextAuth.js](https://next-auth.js.org/)
-- Protected routes via middleware (`_app.js`)
-- Users are redirected to `/auth/login` if not authenticated
-- Secure server-side API authentication using `getToken` from `next-auth/jwt`
-
-To enable Google login:
-```env
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-NEXTAUTH_SECRET=some-secret-key
-```
+- Google OAuth via NextAuth.js
+- API authorization with `getToken` from `next-auth/jwt`
+- Secure access with route protection and middleware
 
 ---
 
 ## ⚙️ Environment Variables
 
-Set the following in your `.env.local`:
-```env
+```
 DATABASE_URL=postgresql://...
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 NEXTAUTH_SECRET=...
 NEXT_PUBLIC_ALPHA_VANTAGE_API_KEY=...
 NEXT_PUBLIC_API_URL=http://localhost:3000/api
+CURRENCYLAYER_API_KEY=...
 ```
 
 ---
@@ -158,70 +162,100 @@ npx prisma migrate dev
 pnpm dev
 ```
 
-Visit: http://localhost:3000/home
+️ Visit [http://localhost:3000/home](http://localhost:3000/home)
 
 ---
 
 ## ☁️ Deployment (Vercel)
 
-1. Connect repo to Vercel
-2. Add environment variables via dashboard
-3. Deploy
+1. Connect to GitHub
+2. Add env vars in Vercel dashboard
+3. Deploy!
 
 ---
 
 ## 📋 API Overview
 
 ### `/api/transactions`
-- **GET**: Fetch all transactions (supports filters)
-- **POST**: Create new transaction (auto-fills date metadata)
-- **PUT**: Update transaction by ID
-- **DELETE**: Delete transaction by ID
-- **Query params**: `year`, `month`, `quarter`, `ticker`, `transfer`, `details`, `categoryNames`, `plCategories`, `accountCountries`, `accountNames`
+- `GET`: Fetch all transactions (supports filtering)
+- `POST`: Create new transaction
+- `PUT`: Update by ID
+- `DELETE`: Delete by ID
+- `POST /import`: Upload CSV file of transactions
 
-### `/api/accounts`
-- **GET**: Get all accounts
-- **POST**: Add new account
-- **PUT**: Update account by ID
-- **DELETE**: Delete account by ID
+**Filters**: `year`, `month`, `quarter`, `transfer`, `ticker`, `categoryNames`, `plCategories`, `accountCountries`, `accountNames`
 
-### `/api/categories`
-- **GET**: Get all categories
-- **POST**: Add new category
-- **PUT**: Update category by ID
-- **DELETE**: Delete category by ID
+---
+
+### `/api/accounts`, `/api/categories`
+- `GET`, `POST`, `PUT`, `DELETE`
+
+---
 
 ### `/api/currency-rates`
-- **GET**: Get all currency rates
-- **POST**: Add new monthly currency rate
-- **PUT**: Update by ID
-- **DELETE**: Delete by ID
+- `GET`: Filter by year/month/from/to
+- `POST`: Add new monthly rate
+- `PUT`: Update existing
+- `DELETE`: Delete rate
+
+---
 
 ### `/api/stockPrices`
-- **GET**: Get or refresh price from AlphaVantage with caching
-  - **Query param**: `ticker`
+- `GET`: Fetch or refresh price by ticker with caching
+
+---
 
 ### `/api/analytics`
-- **GET**: Return normalized revenue/expenses by month/quarter/year and country
-  - **Query params**:
-    - `view=year|quarter|month`
-    - `years=2023,2024,...`
-    - `from=2023-01&to=2024-03` (for ranges)
-    - `currency=USD`
-    - `countries=Brazil,Spain`
+- `GET`: Returns revenue/expenses grouped by `month`, `quarter`, or `year`
+- **Query**:
+  - `view=year|quarter|month`
+  - `years=2023,2024`
+  - `startMonth=2024-01&endMonth=2024-03`
+  - `startQuarter=2023-Q1&endQuarter=2024-Q4`
+  - `currency=EUR`
+  - `countries=Brazil,Spain`
+  - `plMacroCategories=Income,Living Costs`
 
 ---
 
-### 🔜 Upcoming
-
-- [ ] Finish P&L table (rows by macroCategory)
-- [ ] Add support for multi-currency view in P&L
-- [ ] Build Dashboard page with graph filters
-- [ ] Extend Analytics API for Dashboard
-- [ ] Monthly summary export
-- [ ] Budget vs actual tracking
+### `/api/portfolio`
+- `GET`: List all portfolio holdings
+- **Filters**: `account`, `category`
 
 ---
 
-Let me know if you'd like export, PDF generation, email reports, or alerts added!
+## 📁 Scripts
 
+### `updateAnalyticsCache.mjs`
+- Fetches historical FX from CurrencyLayer
+- Builds monthly P&L caches across currencies & macro categories
+
+### `updatePortfolio.js`
+- Analyzes stock/investment transactions and updates `Portfolio` table with share count
+
+---
+
+## 📄 File Import
+
+- Endpoint: `POST /api/transactions/import`
+- Accepts `.csv` files with columns:
+  - `transaction_date`, `accountId`, `categoryId`, `description`, `credit`, `debit`, `currency`, `transfer`, `details`, `numOfShares`, `price`, `ticker`
+
+---
+
+## 📊 Features
+
+- Multi-currency P&L views
+- Monthly/Quarterly/Yearly analytics
+- Historical FX normalization
+- Real-time stock price lookups
+- Investment tracking & grouping
+- Fully authenticated APIs and audit logging
+
+---
+
+## 🔜 Upcoming
+
+- [ ] Complete Dashboard Page
+- [ ] Improved P&L visualization
+- [ ] Alerts & Reporting Automation
