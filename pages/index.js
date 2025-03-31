@@ -1,41 +1,67 @@
-import Link from "next/link";
-import Head from "next/head";
+import React, { useState, useEffect } from 'react';
+import { getSession } from 'next-auth/react';
+import SimpleChat from '../components/SimpleChat';
+import Link from 'next/link';
 
 export default function HomePage() {
-    return (
-        <>
-            <Head>
-                <link
-                    rel="stylesheet"
-                    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-                />
-            </Head>
-            <div className="min-vh-100 bg-light d-flex flex-column justify-content-center align-items-center">
-                <h1 className="text-primary mb-5">Bataty Finance</h1>
-                <div className="container">
-                    <div className="row g-3 justify-content-center">
+  const [session, setSession] = useState(null);
 
-                        <HomeButton href="/transactions" icon="bi-list-check" text="Transactions" style="primary" />
-                        <HomeButton href="/pnl" icon="bi-graph-up" text="P&L" style="success" />
-                        <HomeButton href="/dashboard" icon="bi-pie-chart" text="Expense Dashboard" style="info" />
-                        <HomeButton href="/portfolio" icon="bi-bar-chart-line" text="Portfolio" style="secondary" />
-                        <HomeButton href="/accounts" icon="bi-wallet2" text="Accounts" style="warning" />
-                        <HomeButton href="/categories" icon="bi-tags" text="Categories" style="danger" />
-                        <HomeButton href="/currency-rates" icon="bi-currency-exchange" text="Currency Rates" style="dark" />
+  useEffect(() => {
+    getSession().then(setSession);
+  }, []);
 
-                    </div>
-                </div>
-            </div>
-        </>
-    );
-}
+  return (
+    <div className="container py-5">
+      <h1 className="text-center mb-4">Welcome to Bliss Finance Dashboard</h1>
 
-function HomeButton({ href, icon, text, style }) {
-    return (
-        <div className="col-6 col-md-4 col-lg-3">
-            <Link href={href} className={`btn btn-outline-${style} w-100 py-3 d-flex align-items-center justify-content-center shadow-sm`}>
-                <i className={`bi ${icon} me-2`}></i> {text}
-            </Link>
+      {/* Embedded BLISS Assistant */}
+      <div className="card mb-5 p-4 shadow-sm">
+        <SimpleChat />
+      </div>
+
+      {/* Main Navigation Buttons */}
+      <div className="row g-4">
+        <div className="col-md-3 d-grid">
+          <Link href="/transactions" className="btn btn-outline-primary">
+            💰 Transactions
+          </Link>
         </div>
-    );
+        <div className="col-md-3 d-grid">
+          <Link href="/accounts" className="btn btn-outline-success">
+            🏦 Accounts
+          </Link>
+        </div>
+        <div className="col-md-3 d-grid">
+          <Link href="/categories" className="btn btn-outline-info">
+            🏷️ Categories
+          </Link>
+        </div>
+        <div className="col-md-3 d-grid">
+          <Link href="/portfolio" className="btn btn-outline-dark">
+            📈 Portfolio
+          </Link>
+        </div>
+        <div className="col-md-3 d-grid">
+          <Link href="/pnl" className="btn btn-outline-warning">
+            📊 P&L
+          </Link>
+        </div>
+        <div className="col-md-3 d-grid">
+          <Link href="/dashboard" className="btn btn-outline-secondary">
+            📉 Dashboard
+          </Link>
+        </div>
+        <div className="col-md-3 d-grid">
+          <Link href="/currency" className="btn btn-outline-danger">
+            💱 Currency Rates
+          </Link>
+        </div>
+        <div className="col-md-3 d-grid">
+          <Link href="/assistant" className="btn btn-outline-primary">
+            🤖 BLISS Assistant
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 }

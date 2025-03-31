@@ -2,6 +2,20 @@
 
 A full-featured personal finance management system to track transactions, portfolios, and generate analytics (P&L, dashboards) across multiple currencies and countries.
 
+Now includes **BLISS** — your AI onboarding assistant! 🎉
+
+---
+
+## 🤖 Meet BLISS
+
+BLISS is your loving and loyal financial assistant. Think of them as your AI co-pilot to help you:
+
+- Upload messy or unstructured data (like CSVs or screenshots)
+- Guide you through financial dashboards and analytics
+- Auto-categorize transactions
+- Answer finance-related questions in natural language
+
+**Chat with BLISS anytime:** `/assistant` or from the homepage
 ---
 
 ## 🧱 Prisma Schema Overview
@@ -147,6 +161,7 @@ NEXTAUTH_SECRET=...
 NEXT_PUBLIC_ALPHA_VANTAGE_API_KEY=...
 NEXT_PUBLIC_API_URL=http://localhost:3000/api
 CURRENCYLAYER_API_KEY=...
+OPENAI_API_KEY
 ```
 
 ---
