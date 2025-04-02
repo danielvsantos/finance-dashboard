@@ -74,7 +74,7 @@ async function handlePost(req, res, session) {
     });
     await prisma.auditLog.create({
       data: {
-        userId: session.email,
+        userId: session?.email || req.body.userId || "unknown-user",
         action: "CREATE",
         table: "Account",
         recordId: newAccount.id,
@@ -115,7 +115,7 @@ async function handlePut(req, res, session) {
     });
     await prisma.auditLog.create({
       data: {
-        userId: session.email,
+        userId: session?.email || req.body.userId || "unknown-user",
         action: "UPDATE",
         table: "Account",
         recordId: updatedAccount.id,

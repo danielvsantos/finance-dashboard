@@ -94,7 +94,7 @@ async function handlePost(req, res, session) {
 
     await prisma.auditLog.create({
       data: {
-        userId: session.email,
+        userId: session?.email || req.body.userId || "unknown-user",
         action: "CREATE",
         table: "Currency Rate",
         recordId: newCurrencyRate.id,
@@ -139,7 +139,7 @@ async function handlePut(req, res, session) {
 
     await prisma.auditLog.create({
       data: {
-        userId: session.email,
+        userId: session?.email || req.body.userId || "unknown-user",
         action: "UPDATE",
         table: "Currency Rate",
         recordId: updated.id,

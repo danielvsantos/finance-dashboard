@@ -2,18 +2,16 @@
 import { useState } from "react";
 
 export default function SimpleChat() {
-  const [messages, setMessages] = useState([
-    { role: "system", content: "You are a helpful assistant for onboarding personal finance data." },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [threadId, setThreadId] = useState(null);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const newMessage = { role: "user", content: input };
-    const updatedMessages = [...messages, newMessage];
-    setMessages(updatedMessages);
+    const userMessage = input.trim();
+    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setInput("");
     setLoading(true);
 
@@ -21,12 +19,16 @@ export default function SimpleChat() {
       const res = await fetch("/api/open-ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updatedMessages }),
+        body: JSON.stringify({ message: userMessage, threadId }),
       });
 
       const data = await res.json();
+
       if (data?.reply) {
         setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+        if (data?.threadId && !threadId) {
+          setThreadId(data.threadId); // Save the thread ID to continue the convo
+        }
       } else {
         setMessages((prev) => [...prev, { role: "assistant", content: "Something went wrong." }]);
       }
@@ -50,7 +52,7 @@ export default function SimpleChat() {
       <h2 className="text-center text-primary mb-4">Need help? Ask BLISS 👇</h2>
 
       <div className="border rounded p-3 mb-3" style={{ minHeight: "400px", background: "#f9f9f9" }}>
-        {messages.slice(1).map((msg, idx) => (
+        {messages.map((msg, idx) => (
           <div key={idx} className={`mb-2 ${msg.role === "user" ? "text-end" : ""}`}>
             <div
               className={`d-inline-block p-2 rounded ${
@@ -61,7 +63,7 @@ export default function SimpleChat() {
             </div>
           </div>
         ))}
-        {loading && <div className="text-muted">Assistant is typing...</div>}
+        {loading && <div className="text-muted">BLISS is thinking...</div>}
       </div>
 
       <textarea

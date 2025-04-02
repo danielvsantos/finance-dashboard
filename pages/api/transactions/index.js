@@ -9,9 +9,18 @@ export default async function handler(req, res) {
   
   try {
 
-    const session = await getToken({ req });
+    // console.log("🟡 Incoming Request:");
+    // console.log("➡️ Method:", req.method);
+    // console.log("➡️ Headers:", req.headers);
+    const session = await getToken({
+      req,
+      raw: true, // get raw JWT if needed
+      secureCookie: false, // only needed if running http locally
+    });
+
     if (!session) {
       return res.status(StatusCodes.UNAUTHORIZED).json({ error: 'Unauthorized' });
+    
     }
 
     switch (req.method) {
@@ -100,7 +109,7 @@ async function handlePost(req, res, session) {
 
     const newTransaction = await prisma.transaction.create({
       data: {
-        userId: session.email,
+        userId: session.email || req.body.userId || "unknown-user",
         transaction_date: date,
         year,
         quarter,
@@ -121,7 +130,7 @@ async function handlePost(req, res, session) {
     });
     await prisma.auditLog.create({
         data: {
-          userId: session.email,
+          userId: session.email || req.body.userId || "unknown-user",
           action: "CREATE",
           table: "Transaction",
           recordId: newTransaction.id,
@@ -164,7 +173,7 @@ async function handlePut(req, res, session) {
     const updatedTransaction = await prisma.transaction.update({
       where: { id: transactionId },
       data: {
-        userId: session.email,
+        userId: session?.email || req.body.userId || "unknown-user",
         transaction_date: date,
         year,
         quarter,
@@ -186,7 +195,7 @@ async function handlePut(req, res, session) {
     });
     await prisma.auditLog.create({
         data: {
-          userId: session.email,
+          userId: session?.email || req.body.userId || "unknown-user",
           action: "UPDATE",
           table: "Transaction",
           recordId: updatedTransaction.id,

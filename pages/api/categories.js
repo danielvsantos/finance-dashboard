@@ -74,7 +74,7 @@ async function handleGet(req, res) {
     });
     await prisma.auditLog.create({
       data: {
-        userId: session.email,
+        userId: session?.email || req.body.userId || "unknown-user",
         action: "CREATE",
         table: "Category",
         recordId: newCategory.id,
@@ -115,7 +115,7 @@ async function handlePut(req, res, session) {
     });
     await prisma.auditLog.create({
       data: {
-        userId: session.email,
+        userId: session?.email || req.body.userId || "unknown-user",
         action: "UPDATE",
         table: "Category",
         recordId: updatedCategory.id,
