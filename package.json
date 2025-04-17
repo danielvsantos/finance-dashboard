@@ -14,8 +14,7 @@
     "update-bliss": "node scripts/updateBliss.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.8.0",
-    "@prisma/client": "^6.5.0",
+    "@prisma/client": "^6.6.0",
     "@sentry/nextjs": "^9.10.1",
     "axios": "^1.8.3",
     "bootstrap": "^5.3.3",
@@ -42,6 +41,6 @@
     "@eslint/eslintrc": "^3",
     "eslint": "^9.22.0",
     "eslint-config-next": "15.2.2",
-    "prisma": "^6.5.0"
+    "prisma": "^6.6.0"
   }
 }
