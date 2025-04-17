@@ -11,9 +11,7 @@
     "update-analytics-cache": "node scripts/updateAnalyticsCache.mjs",
     "update-portfolio": "node scripts/updatePortfolioHoldings.mjs",
     "chat-with-bliss": "node scripts/chat.mjs",
-    "update-bliss": "node scripts/updateBliss.mjs",
-    "mcpserver": "node scripts/mcpserver.mjs",
-    "registermcp": "node scripts/registermcp.mjs"
+    "update-bliss": "node scripts/updateBliss.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
