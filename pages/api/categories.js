@@ -64,39 +64,40 @@ async function handleGet(req, res) {
 
   async function handlePost(req, res, session) {
     try {
-    const { name, plCategory, plMacroCategory } = req.body;
-    if (!name || !plCategory || !plMacroCategory) {
-        return res.status(400).json({ message: "Missing required fields: name, plCategory, plMacroCategory" });
-    }
+      const { name, group, type } = req.body;
+      if (!name || !group || !type) {
+        return res.status(400).json({ message: "Missing required fields: name, group, type" });
+      }
   
-    const newCategory = await prisma.category.create({
-        data: { name, plCategory, plMacroCategory }
-    });
-    await prisma.auditLog.create({
-      data: {
-        userId: session?.email || req.body.userId || "unknown-user",
-        action: "CREATE",
-        table: "Category",
-        recordId: newCategory.id,
-      },
-    });
-    return res.status(StatusCodes.CREATED).json(newCategory);
+      const newCategory = await prisma.category.create({
+        data: { name, group, type }
+      });
+  
+      await prisma.auditLog.create({
+        data: {
+          userId: session?.email || req.body.userId || "unknown-user",
+          action: "CREATE",
+          table: "Category",
+          recordId: newCategory.id,
+        },
+      });
+  
+      return res.status(StatusCodes.CREATED).json(newCategory);
+    } 
+    catch (error) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: 'Validation Failed',
+        details: error.message,
+      });
+    }
   }
-  catch (error) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      error: 'Validation Failed',
-      details: error.message,
-    });
-  }
-  }
-
-
-
-async function handlePut(req, res, session) {
+  
+  async function handlePut(req, res, session) {
     try {
       const { id } = req.query;
-      const { name, plCategory, plMacroCategory } = req.body;
+      const { name, group, type } = req.body;
       const categoryId = parseInt(id, 10);
+  
       if (isNaN(categoryId)) {
         return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Invalid category ID' });
       }
@@ -108,27 +109,28 @@ async function handlePut(req, res, session) {
       if (!existingCategory) {
         return res.status(StatusCodes.NOT_FOUND).json({ error: 'Category not found' });
       }
-      
+  
       const updatedCategory = await prisma.category.update({
-        where: { id: parseInt(id, 10) },
-        data: { name, plCategory, plMacroCategory }
-    });
-    await prisma.auditLog.create({
-      data: {
-        userId: session?.email || req.body.userId || "unknown-user",
-        action: "UPDATE",
-        table: "Category",
-        recordId: updatedCategory.id,
-      },
-    });
-    return res.status(StatusCodes.OK).json(updatedCategory);
-  }
-  catch (error) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      error: 'Validation Failed',
-      details: error.message,
-    });
-  }
+        where: { id: categoryId },
+        data: { name, group, type }
+      });
+  
+      await prisma.auditLog.create({
+        data: {
+          userId: session?.email || req.body.userId || "unknown-user",
+          action: "UPDATE",
+          table: "Category",
+          recordId: updatedCategory.id,
+        },
+      });
+  
+      return res.status(StatusCodes.OK).json(updatedCategory);
+    } catch (error) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: 'Validation Failed',
+        details: error.message,
+      });
+    }
   }
 
   async function handleDelete(req, res, session) {

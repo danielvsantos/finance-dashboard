@@ -3,24 +3,11 @@ import prisma from '../../../prisma/prisma.js';
 import { StatusCodes } from 'http-status-codes';
 import * as Sentry from '@sentry/nextjs';
 
-
-
 export default async function handler(req, res) {
-  
   try {
-
-    // console.log("🟡 Incoming Request:");
-    // console.log("➡️ Method:", req.method);
-    // console.log("➡️ Headers:", req.headers);
-    const session = await getToken({
-      req,
-      raw: true, // get raw JWT if needed
-      secureCookie: false, // only needed if running http locally
-    });
-
+    const session = await getToken({ req });
     if (!session) {
       return res.status(StatusCodes.UNAUTHORIZED).json({ error: 'Unauthorized' });
-    
     }
 
     switch (req.method) {
@@ -58,7 +45,7 @@ async function handleGet(req, res, session) {
       where: { id: transactionId },
       include: {
         account: { select: { name: true } },
-        category: { select: { name: true, plCategory: true } },
+        category: { select: { name: true, group: true, type: true } },
       },
     });
 
@@ -69,25 +56,21 @@ async function handleGet(req, res, session) {
     return res.status(StatusCodes.OK).json(transaction);
   }
 
-  // Build filter object
   const filters = {
     ...(year && { year: parseInt(year, 10) }),
     ...(month && { month: parseInt(month, 10) }),
     ...(quarter && { quarter }),
     ...(categoryId && { categoryId: parseInt(categoryId, 10) }),
     ...(accountId && { accountId: parseInt(accountId, 10) }),
-    ...(plCategory && {
-      category: {
-        plCategory,
-      },
-    }),
+    ...(group && { category: { group } }),
+    ...(type && { category: { type } }),
   };
 
   const transactions = await prisma.transaction.findMany({
     where: filters,
     include: {
       account: { select: { name: true } },
-      category: { select: { name: true, plCategory: true } },
+      category: { select: { name: true, group: true, type: true } },
     },
     orderBy: { transaction_date: 'desc' },
   });
@@ -97,10 +80,9 @@ async function handleGet(req, res, session) {
 
 async function handlePost(req, res, session) {
   try {
-    
-    const { transaction_date, category_id, account_id, description, details, credit, debit, currency, transfer, numOfShares, price, ticker } = req.body;
+    const { transaction_date, categoryId, accountId, description, details, credit, debit, currency, transfer, numOfShares, price, ticker } = req.body;
     console.log("Incoming Transaction Data:", req.body);
-      
+
     const date = new Date(transaction_date);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
@@ -115,8 +97,8 @@ async function handlePost(req, res, session) {
         quarter,
         month,
         day,
-        categoryId: parseInt(category_id, 10),
-        accountId: parseInt(account_id, 10),
+        categoryId: parseInt(categoryId, 10),
+        accountId: parseInt(accountId, 10),
         description,
         details,
         credit: credit ? parseFloat(credit) : null,
@@ -125,17 +107,18 @@ async function handlePost(req, res, session) {
         transfer,
         numOfShares: numOfShares ? parseFloat(numOfShares) : null,
         price: price ? parseFloat(price) : null,
-        ticker 
-      }
+        ticker,
+      },
     });
+
     await prisma.auditLog.create({
-        data: {
-          userId: session.email || req.body.userId || "unknown-user",
-          action: "CREATE",
-          table: "Transaction",
-          recordId: newTransaction.id,
-        },
-      });
+      data: {
+        userId: session.email || req.body.userId || "unknown-user",
+        action: "CREATE",
+        table: "Transaction",
+        recordId: newTransaction.id,
+      },
+    });
 
     return res.status(StatusCodes.CREATED).json(newTransaction);
   } catch (error) {
@@ -161,9 +144,10 @@ async function handlePut(req, res, session) {
     if (!existingTransaction) {
       return res.status(StatusCodes.NOT_FOUND).json({ error: 'Transaction not found' });
     }
-    const { transaction_date, category_id, account_id, description, details, credit, debit, currency, transfer, numOfShares, price, ticker } = req.body;
+
+    const { transaction_date, categoryId, accountId, description, details, credit, debit, currency, transfer, numOfShares, price, ticker } = req.body;
     console.log("Incoming Transaction Data:", req.body);
-      
+
     const date = new Date(transaction_date);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
@@ -179,8 +163,8 @@ async function handlePut(req, res, session) {
         quarter,
         month,
         day,
-        categoryId: parseInt(category_id, 10),
-        accountId: parseInt(account_id, 10),
+        categoryId: parseInt(categoryId, 10),
+        accountId: parseInt(accountId, 10),
         description,
         details,
         credit: credit ? parseFloat(credit) : null,
@@ -189,18 +173,18 @@ async function handlePut(req, res, session) {
         transfer,
         numOfShares: numOfShares ? parseFloat(numOfShares) : null,
         price: price ? parseFloat(price) : null,
-        ticker
-          
+        ticker,
       },
     });
+
     await prisma.auditLog.create({
-        data: {
-          userId: session?.email || req.body.userId || "unknown-user",
-          action: "UPDATE",
-          table: "Transaction",
-          recordId: updatedTransaction.id,
-        },
-      });
+      data: {
+        userId: session?.email || req.body.userId || "unknown-user",
+        action: "UPDATE",
+        table: "Transaction",
+        recordId: updatedTransaction.id,
+      },
+    });
 
     return res.status(StatusCodes.OK).json(updatedTransaction);
   } catch (error) {
@@ -214,7 +198,6 @@ async function handlePut(req, res, session) {
 async function handleDelete(req, res, session) {
   try {
     const { id } = req.query;
-
     const transactionId = parseInt(id, 10);
     if (isNaN(transactionId)) {
       return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Invalid transaction ID' });
@@ -229,18 +212,17 @@ async function handleDelete(req, res, session) {
     }
 
     const deleted = await prisma.transaction.delete({
-        where: { id: transactionId },
-      });
-
+      where: { id: transactionId },
+    });
 
     await prisma.auditLog.create({
-        data: {
-          userId: session.email,
-          action: "DELETE",
-          table: "Transaction",
-          recordId: deleted.id,
-        },
-      });
+      data: {
+        userId: session.email,
+        action: "DELETE",
+        table: "Transaction",
+        recordId: deleted.id,
+      },
+    });
 
     return res.status(StatusCodes.NO_CONTENT).end();
   } catch (error) {

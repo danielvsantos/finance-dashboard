@@ -62,41 +62,50 @@ async function handleGet(req, res) {
   }
 
 
-async function handlePost(req, res, session) {
+  async function handlePost(req, res, session) {
     try {
-    const { name, country } = req.body;
-    if (!name || !country ) {
-        return res.status(400).json({ message: "Missing required fields: name, country" });
-    }
+      const { name, accountNumber, bank, currency, country, owner } = req.body;
   
-    const newAccount = await prisma.account.create({
-        data: { name, country }
-    });
-    await prisma.auditLog.create({
-      data: {
-        userId: session?.email || req.body.userId || "unknown-user",
-        action: "CREATE",
-        table: "Account",
-        recordId: newAccount.id,
-      },
-    });
-    return res.status(StatusCodes.CREATED).json(newAccount);
+      if (!name || !accountNumber || !bank || !currency || !country || !owner) {
+        return res.status(400).json({ message: "Missing required fields: name, accountNumber, bank, currency, country, owner" });
+      }
+  
+      const newAccount = await prisma.account.create({
+        data: {
+          name,
+          accountNumber,
+          bank,
+          currency,
+          country,
+          owner,
+        }
+      });
+  
+      await prisma.auditLog.create({
+        data: {
+          userId: session?.email || req.body.userId || "unknown-user",
+          action: "CREATE",
+          table: "Account",
+          recordId: newAccount.id,
+        },
+      });
+  
+      return res.status(StatusCodes.CREATED).json(newAccount);
+    } 
+    catch (error) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: 'Validation Failed',
+        details: error.message,
+      });
+    }
   }
-  catch (error) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      error: 'Validation Failed',
-      details: error.message,
-    });
-  }
-  }
-
-
-
-async function handlePut(req, res, session) {
+  
+  async function handlePut(req, res, session) {
     try {
       const { id } = req.query;
-      const { name, country } = req.body;
+      const { name, accountNumber, bank, currency, country, owner } = req.body;
       const accountId = parseInt(id, 10);
+  
       if (isNaN(accountId)) {
         return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Invalid account ID' });
       }
@@ -108,29 +117,37 @@ async function handlePut(req, res, session) {
       if (!existingAccount) {
         return res.status(StatusCodes.NOT_FOUND).json({ error: 'Account not found' });
       }
-      
+  
       const updatedAccount = await prisma.account.update({
-        where: { id: parseInt(id, 10) },
-        data: { name, country}
-    });
-    await prisma.auditLog.create({
-      data: {
-        userId: session?.email || req.body.userId || "unknown-user",
-        action: "UPDATE",
-        table: "Account",
-        recordId: updatedAccount.id,
-      },
-    });
-    return res.status(StatusCodes.OK).json(updatedAccount);
+        where: { id: accountId },
+        data: {
+          name,
+          accountNumber,
+          bank,
+          currency,
+          country,
+          owner,
+        }
+      });
+  
+      await prisma.auditLog.create({
+        data: {
+          userId: session?.email || req.body.userId || "unknown-user",
+          action: "UPDATE",
+          table: "Account",
+          recordId: updatedAccount.id,
+        },
+      });
+  
+      return res.status(StatusCodes.OK).json(updatedAccount);
+    } catch (error) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        error: 'Validation Failed',
+        details: error.message,
+      });
+    }
   }
-  catch (error) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      error: 'Validation Failed',
-      details: error.message,
-    });
-  }
-  }
-
+  
 async function handleDelete(req, res, session) {
     try {
       const { id } = req.query;
