@@ -33,7 +33,7 @@ export default async function handler(req, res) {
 }
 
 async function handleGet(req, res, session) {
-  const { id, year, month, quarter, categoryId, accountId, plCategory } = req.query;
+  const { id, year, month, quarter, categoryId, accountId, group, type } = req.query;
 
   if (id) {
     const transactionId = parseInt(id, 10);
