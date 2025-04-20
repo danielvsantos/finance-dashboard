@@ -40,45 +40,34 @@ export default function CategoryForm({ onCategoryAdded }) {
 
   return (
     <form onSubmit={handleSubmit} className="row g-3">
-      <div className="col-md-3">
-        <label className="form-label">Name</label>
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          className="form-control"
-          required
-        />
-      </div>
-
-      <div className="col-md-3">
-        <label className="form-label">Group</label>
-        <input
-          type="text"
-          name="group"
-          value={formData.group}
-          onChange={handleChange}
-          className="form-control"
-          required
-        />
-      </div>
-
-      <div className="col-md-3">
-        <label className="form-label">Type</label>
-        <input
-          type="text"
-          name="type"
-          value={formData.type}
-          onChange={handleChange}
-          className="form-control"
-          required
-        />
-      </div>
+      {[
+        { name: "name", label: "Name" },
+        { name: "group", label: "Group" },
+        { name: "type", label: "Type" },
+      ].map(({ name, label }) => (
+        <div className="col-md-4" key={name}>
+          <label className="form-label fw-semibold" style={{ fontFamily: 'Urbanist, sans-serif', fontSize: '0.9rem' }}>
+            {label}
+          </label>
+          <input
+            type="text"
+            name={name}
+            value={formData[name]}
+            onChange={handleChange}
+            required
+            className="form-control rounded border shadow-sm"
+            style={{ fontFamily: 'Urbanist, sans-serif', fontSize: '0.95rem' }}
+          />
+        </div>
+      ))}
 
       <div className="col-12">
-        <button type="submit" className="btn btn-primary">
-          Add Category
+        <button
+          type="submit"
+          className="btn btn-primary mt-3 px-4"
+          style={{ fontFamily: 'Urbanist, sans-serif', textTransform: 'lowercase' }}
+        >
+          save
         </button>
       </div>
     </form>

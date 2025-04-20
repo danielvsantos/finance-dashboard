@@ -19,43 +19,48 @@ export default function CurrencyRatesPage() {
   };
 
   return (
-    <div className="container mt-5">
-      <h1 className="text-primary text-center">Currency Rates</h1>
-      <div className="card p-4 shadow mb-4">
+    <div className="container" style={{ maxWidth: "800px" }}>
+      <div className="text-center mb-4">
+        <h2
+          style={{
+            fontFamily: "Urbanist, sans-serif",
+            fontWeight: 700,
+            textTransform: "lowercase",
+            color: "#1e3a8a",
+            letterSpacing: "0.5px",
+          }}
+        >
+          currency rates
+        </h2>
+      </div>
+
+      <div className="bg-white rounded shadow-sm p-4 mb-4">
         <CurrencyRateForm onRateAdded={fetchRates} />
       </div>
-      <div className="table-responsive">
-        <table className="table table-striped table-hover">
-          <thead className="table-dark">
-            <tr>
-              <th>Year</th>
-              <th>Month</th>
-              <th>From</th>
-              <th>To</th>
-              <th>Rate</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rates.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="text-center text-muted">
-                  No currency rates found
-                </td>
-              </tr>
-            ) : (
-              rates.map((rate) => (
-                <tr key={`${rate.year}-${rate.month}-${rate.currencyFrom}-${rate.currencyTo}`}>
-                  <td>{rate.year}</td>
-                  <td>{rate.month}</td>
-                  <td>{rate.currencyFrom}</td>
-                  <td>{rate.currencyTo}</td>
-                  <td>{rate.value}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+
+      {rates.length === 0 ? (
+        <p className="text-center text-muted">No currency rates found</p>
+      ) : (
+        <ul className="list-group">
+          {rates.map((rate) => (
+            <li
+              key={`${rate.year}-${rate.month}-${rate.currencyFrom}-${rate.currencyTo}`}
+              className="list-group-item d-flex justify-content-between align-items-center"
+              style={{ fontFamily: 'Urbanist, sans-serif', fontSize: '0.95rem' }}
+            >
+              <div>
+                <div className="fw-bold">
+                  {rate.currencyFrom} → {rate.currencyTo}
+                </div>
+                <div className="text-muted small">
+                  {rate.month}/{rate.year}
+                </div>
+              </div>
+              <div className="text-primary fw-semibold">{rate.value}</div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

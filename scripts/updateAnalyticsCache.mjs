@@ -1,168 +1,110 @@
-import { PrismaClient } from "@prisma/client";
-import axios from "axios";
-import dotenv from "dotenv";
+import { PrismaClient } from '@prisma/client';
+import axios from 'axios';
+import dotenv from 'dotenv';
+import cliProgress from 'cli-progress';
 
 dotenv.config();
-
 const prisma = new PrismaClient();
+
 const API_KEY = process.env.CURRENCYLAYER_API_KEY;
-const BASE_URL = "https://api.currencylayer.com/historical";
+const BASE_URL = 'https://api.currencylayer.com/historical';
+const TARGET_CURRENCIES = ['USD', 'EUR', 'BRL'];
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function fetchHistoricalRate({ year, month, currencyFrom, currencyTo }) {
-  const date = `${year}-${String(month).padStart(2, "0")}-01`;
+  const date = `${year}-${String(month).padStart(2, '0')}-01`;
   const url = `${BASE_URL}?access_key=${API_KEY}&date=${date}&source=${currencyFrom}&currencies=${currencyTo}`;
 
   try {
     const response = await axios.get(url);
-    if (!response.data.success || !response.data.quotes) {
-      console.warn(`⚠️ Could not fetch rate for ${currencyFrom} to ${currencyTo} on ${date}`);
-      console.log("Full API response:", JSON.stringify(response.data, null, 2));
-      return null;
-    }
-
-    const rateKey = `${currencyFrom}${currencyTo}`;
-    const rate = response.data.quotes[rateKey];
-    console.log(`💱 Fetched rate ${currencyFrom} to ${currencyTo} on ${date}: ${rate}`);
-    return rate;
+    if (!response.data.success || !response.data.quotes) return null;
+    return response.data.quotes[`${currencyFrom}${currencyTo}`];
   } catch (err) {
-    console.error(`❌ API error for ${currencyFrom}-${currencyTo} on ${date}:`, err.message);
+    console.error(`❌ API error for ${currencyFrom}->${currencyTo} on ${date}:`, err.message);
     return null;
   }
 }
 
 async function updateAnalyticsCache() {
   try {
-    const years = await prisma.transaction.findMany({
-      distinct: ["year"],
-      select: { year: true },
-    });
+    console.log('🚀 Starting analytics cache update...');
+    const distinctYears = await prisma.transaction.findMany({ distinct: ['year'], select: { year: true } });
+    const years = distinctYears.map(y => y.year);
 
-    const targetCurrencies = ["USD", "EUR", "BRL"];
-    const missingRates = new Set();
+    const totalSteps = years.length * TARGET_CURRENCIES.length;
+    const progressBar = new cliProgress.SingleBar({ format: 'Progress |{bar}| {percentage}% | {value}/{total} tasks' }, cliProgress.Presets.shades_classic);
+    progressBar.start(totalSteps, 0);
 
-    // Step 1: Analyze transactions to find missing currency rates
-    for (const { year } of years) {
+    for (const year of years) {
       const transactions = await prisma.transaction.findMany({
         where: { year },
-        include: { category: true, account: true },
-      });
-
-      for (const txn of transactions) {
-        for (const targetCurrency of targetCurrencies) {
-          if (txn.currency !== targetCurrency) {
-            const key = `${txn.year}-${txn.month}-${txn.currency}-${targetCurrency}`;
-            const exists = await prisma.currencyRate.findFirst({
-              where: {
-                year: txn.year,
-                month: txn.month,
-                currencyFrom: txn.currency,
-                currencyTo: targetCurrency,
-              },
-            });
-            if (!exists) {
-              missingRates.add(key);
-            }
-          }
-        }
-      }
-    }
-
-    // Step 2: Fetch missing historical rates and store in DB
-    for (const key of missingRates) {
-      const [year, month, currencyFrom, currencyTo] = key.split("-");
-
-      if (currencyFrom === currencyTo) {
-        console.log(`🔁 Skipping same-currency rate: ${currencyFrom} to ${currencyTo}`);
-        continue;
-      }
-
-      const alreadyExists = await prisma.currencyRate.findFirst({
-        where: {
-          year: parseInt(year),
-          month: parseInt(month),
-          currencyFrom,
-          currencyTo,
-        },
-      });
-
-      if (alreadyExists) {
-        console.log(`✔️ Skipping already existing rate: ${currencyFrom} to ${currencyTo} for ${month}/${year}`);
-        continue;
-      }
-
-      const value = await fetchHistoricalRate({
-        year: parseInt(year),
-        month: parseInt(month),
-        currencyFrom,
-        currencyTo,
-      });
-
-      await delay(1000);
-
-      if (!value) continue;
-
-      await prisma.currencyRate.upsert({
-        where: {
-          year_month_currencyFrom_currencyTo: {
-            year: parseInt(year),
-            month: parseInt(month),
-            currencyFrom,
-            currencyTo,
-          },
-        },
-        update: { value, updatedAt: new Date() },
-        create: {
-          year: parseInt(year),
-          month: parseInt(month),
-          currencyFrom,
-          currencyTo,
-          value,
-        },
-      });
-
-      console.log(`💾 Rate saved: ${currencyFrom} to ${currencyTo} for ${month}/${year}`);
-    }
-
-    // Step 3: Calculate analytics cache
-    for (const { year } of years) {
-      const transactions = await prisma.transaction.findMany({
-        where: { year },
-        include: { category: true, account: true },
+        include: { account: true, category: true }
       });
 
       const rates = await prisma.currencyRate.findMany({ where: { year } });
       const monthlyRates = {};
       for (const rate of rates) {
-        const key = `${rate.year}-${rate.month}-${rate.currencyFrom}-${rate.currencyTo}`;
-        monthlyRates[key] = rate.value;
+        monthlyRates[`${rate.year}-${rate.month}-${rate.currencyFrom}-${rate.currencyTo}`] = rate.value;
       }
 
-      for (const targetCurrency of targetCurrencies) {
+      for (const targetCurrency of TARGET_CURRENCIES) {
         const cacheMap = {};
 
         for (const txn of transactions) {
-          const { year, month, currency, account, category } = txn;
-          const country = account?.country || "Unknown";
-          const plMacroCategory = category?.plMacroCategory || "Uncategorized";
-          const plCategory = category?.plCategory || "Uncategorized";
+          const { month, currency, account, category, credit = 0, debit = 0 } = txn;
+          const amountRaw = credit - debit;
 
-          let amountConverted = (txn.credit || 0) - (txn.debit || 0);
-
+          let convertedAmount = amountRaw;
           if (currency !== targetCurrency) {
             const rateKey = `${year}-${month}-${currency}-${targetCurrency}`;
-            const rate = monthlyRates[rateKey];
-            if (!rate) {
-              console.warn(`⚠️ Missing conversion rate for ${rateKey}. Skipping transaction.`);
-              continue;
+            let conversionRate = monthlyRates[rateKey];
+
+            if (!conversionRate) {
+              conversionRate = await fetchHistoricalRate({
+                year,
+                month,
+                currencyFrom: currency,
+                currencyTo: targetCurrency
+              });
+
+              if (conversionRate) {
+                monthlyRates[rateKey] = conversionRate;
+
+                await prisma.currencyRate.upsert({
+                  where: {
+                    year_month_currencyFrom_currencyTo: {
+                      year,
+                      month,
+                      currencyFrom: currency,
+                      currencyTo: targetCurrency
+                    }
+                  },
+                  update: { value: conversionRate, updatedAt: new Date() },
+                  create: {
+                    year,
+                    month,
+                    currencyFrom: currency,
+                    currencyTo: targetCurrency,
+                    value: conversionRate
+                  }
+                });
+              } else {
+                continue;
+              }
+
+              await delay(1000); // respect rate limit
             }
-            amountConverted *= rate;
+
+            convertedAmount = amountRaw * conversionRate;
           }
 
-          const key = `${year}-${month}-${targetCurrency}-${country}-${plMacroCategory}`;
+          const country = account?.country || 'Unknown';
+          const type = category?.type || 'Uncategorized';
+          const group = category?.group || 'Uncategorized';
+          const key = `${year}-${month}-${targetCurrency}-${country}-${type}-${group}`;
 
           if (!cacheMap[key]) {
             cacheMap[key] = {
@@ -170,64 +112,46 @@ async function updateAnalyticsCache() {
               month,
               currency: targetCurrency,
               country,
-              plMacroCategory,
-              revenue: 0,
-              expenses: 0,
-              data: {},
+              type,
+              group,
+              balance: 0
             };
           }
 
-          const cache = cacheMap[key];
-
-          if (!cache.data[plCategory]) {
-            cache.data[plCategory] = {
-              revenue: 0,
-              expenses: 0,
-            };
-          }
-
-          if (txn.credit) {
-            cache.revenue += amountConverted;
-            cache.data[plCategory].revenue += amountConverted;
-          }
-
-          if (txn.debit) {
-            cache.expenses += amountConverted;
-            cache.data[plCategory].expenses += amountConverted;
-          }
+          cacheMap[key].balance += convertedAmount;
         }
 
         for (const entry of Object.values(cacheMap)) {
-          if (entry.currency !== targetCurrency) continue;
-
           await prisma.analyticsCacheMonthly.upsert({
             where: {
-              year_month_currency_country_plMacroCategory: {
+              year_month_currency_country_type_group: {
                 year: entry.year,
                 month: entry.month,
                 currency: entry.currency,
                 country: entry.country,
-                plMacroCategory: entry.plMacroCategory,
-              },
+                type: entry.type,
+                group: entry.group
+              }
             },
             update: {
-              revenue: entry.revenue,
-              expenses: entry.expenses,
-              data: entry.data,
-              updatedAt: new Date(),
+              balance: entry.balance,
+              updatedAt: new Date()
             },
             create: {
               ...entry,
-              updatedAt: new Date(),
-            },
+              updatedAt: new Date()
+            }
           });
         }
 
-        console.log(`✅ Cache updated for ${year} in ${targetCurrency}`);
+        progressBar.increment();
       }
     }
+
+    progressBar.stop();
+    console.log('🎉 Analytics cache update complete.');
   } catch (error) {
-    console.error("❌ Error updating analytics cache:", error);
+    console.error('❌ Error updating analytics cache:', error);
   } finally {
     await prisma.$disconnect();
   }

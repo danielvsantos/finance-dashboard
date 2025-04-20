@@ -49,7 +49,8 @@ export default async function handler(req, res) {
           continue;
         }
 
-        const [day, month, year] = row.transaction_date.split("/");
+        const [day, month, yearRaw] = row.transaction_date.split("/");
+        const year = yearRaw.length === 2 ? `20${yearRaw}` : yearRaw;
         const dateObj = new Date(`${year}-${month}-${day}`);
         const quarter = `Q${Math.ceil(parseInt(month) / 3)}`;
 
@@ -62,7 +63,6 @@ export default async function handler(req, res) {
           credit: row.credit ? parseFloat(row.credit) : null,
           debit: row.debit ? parseFloat(row.debit) : null,
           currency: row.currency || "USD",
-          transfer: row.transfer?.toLowerCase() === "true",
           numOfShares: parseFloat(row.numOfShares || 0),
           price: parseFloat(row.price || 0),
           ticker: row.ticker || "",

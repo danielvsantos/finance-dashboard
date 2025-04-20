@@ -1,2 +1,0 @@
-﻿transaction_date,description,details,credit,debit,currency,transfer,accountId,categoryId,numOfShares,price,ticker
-27/03/2025,Example purchase,Purchase,,100,USD,FALSE,3,4,10,10,MSFT

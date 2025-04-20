@@ -18,7 +18,6 @@ export default function AccountForm({ onAccountAdded }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitting Account Data:", JSON.stringify(formData, null, 2));
     const session = await getSession();
     if (!session) {
       console.error("No session found. User not authenticated.");
@@ -32,8 +31,6 @@ export default function AccountForm({ onAccountAdded }) {
           "Content-Type": "application/json",
         },
       });
-
-      console.log("Account Created:", response.data);
 
       setFormData({
         name: "",
@@ -52,38 +49,38 @@ export default function AccountForm({ onAccountAdded }) {
 
   return (
     <form onSubmit={handleSubmit} className="row g-3">
-      <div className="col-md-4">
-        <label className="form-label">Account Name</label>
-        <input type="text" name="name" value={formData.name} onChange={handleChange} className="form-control" required />
-      </div>
-
-      <div className="col-md-4">
-        <label className="form-label">Account Number</label>
-        <input type="text" name="accountNumber" value={formData.accountNumber} onChange={handleChange} className="form-control" />
-      </div>
-
-      <div className="col-md-4">
-        <label className="form-label">Bank</label>
-        <input type="text" name="bank" value={formData.bank} onChange={handleChange} className="form-control" />
-      </div>
-
-      <div className="col-md-4">
-        <label className="form-label">Currency</label>
-        <input type="text" name="currency" value={formData.currency} onChange={handleChange} className="form-control" />
-      </div>
-
-      <div className="col-md-4">
-        <label className="form-label">Country</label>
-        <input type="text" name="country" value={formData.country} onChange={handleChange} className="form-control" required />
-      </div>
-
-      <div className="col-md-4">
-        <label className="form-label">Owner</label>
-        <input type="text" name="owner" value={formData.owner} onChange={handleChange} className="form-control" />
-      </div>
+      {[
+        { name: "name", label: "Account Name", required: true },
+        { name: "accountNumber", label: "Account Number" },
+        { name: "bank", label: "Bank" },
+        { name: "currency", label: "Currency" },
+        { name: "country", label: "Country", required: true },
+        { name: "owner", label: "Owner" }
+      ].map(({ name, label, required }) => (
+        <div className="col-md-4" key={name}>
+          <label className="form-label fw-semibold" style={{ fontFamily: 'Urbanist, sans-serif', fontSize: '0.9rem' }}>
+            {label}
+          </label>
+          <input
+            type="text"
+            name={name}
+            value={formData[name]}
+            onChange={handleChange}
+            required={required}
+            className="form-control rounded border shadow-sm"
+            style={{ fontFamily: 'Urbanist, sans-serif', fontSize: '0.95rem' }}
+          />
+        </div>
+      ))}
 
       <div className="col-12">
-        <button type="submit" className="btn btn-primary mt-2">Add Account</button>
+        <button
+          type="submit"
+          className="btn btn-primary mt-3 px-4"
+          style={{ fontFamily: 'Urbanist, sans-serif', textTransform: 'lowercase' }}
+        >
+          save
+        </button>
       </div>
     </form>
   );

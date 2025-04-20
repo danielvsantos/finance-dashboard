@@ -80,7 +80,7 @@ async function handleGet(req, res, session) {
 
 async function handlePost(req, res, session) {
   try {
-    const { transaction_date, categoryId, accountId, description, details, credit, debit, currency, transfer, numOfShares, price, ticker } = req.body;
+    const { transaction_date, categoryId, accountId, description, details, credit, debit, currency, numOfShares, price, ticker } = req.body;
     console.log("Incoming Transaction Data:", req.body);
 
     const date = new Date(transaction_date);
@@ -104,7 +104,6 @@ async function handlePost(req, res, session) {
         credit: credit ? parseFloat(credit) : null,
         debit: debit ? parseFloat(debit) : null,
         currency,
-        transfer,
         numOfShares: numOfShares ? parseFloat(numOfShares) : null,
         price: price ? parseFloat(price) : null,
         ticker,
@@ -145,7 +144,7 @@ async function handlePut(req, res, session) {
       return res.status(StatusCodes.NOT_FOUND).json({ error: 'Transaction not found' });
     }
 
-    const { transaction_date, categoryId, accountId, description, details, credit, debit, currency, transfer, numOfShares, price, ticker } = req.body;
+    const { transaction_date, categoryId, accountId, description, details, credit, debit, currency, numOfShares, price, ticker } = req.body;
     console.log("Incoming Transaction Data:", req.body);
 
     const date = new Date(transaction_date);
@@ -170,7 +169,6 @@ async function handlePut(req, res, session) {
         credit: credit ? parseFloat(credit) : null,
         debit: debit ? parseFloat(debit) : null,
         currency,
-        transfer,
         numOfShares: numOfShares ? parseFloat(numOfShares) : null,
         price: price ? parseFloat(price) : null,
         ticker,
