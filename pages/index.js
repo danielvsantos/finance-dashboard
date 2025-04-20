@@ -1,66 +1,161 @@
-import React, { useState, useEffect } from 'react';
-import { getSession } from 'next-auth/react';
-import SimpleChat from '../components/SimpleChat';
-import Link from 'next/link';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+  Legend
+} from "recharts";
 
-export default function HomePage() {
-  const [session, setSession] = useState(null);
+export default function Dashboard() {
+  const [data, setData] = useState({});
+  const [filters, setFilters] = useState({
+    group: "",
+    type: "",
+    currency: "EUR",
+    country: "",
+    view: "month",
+    startMonth: "2023-01",
+    endMonth: "2023-12"
+  });
+
+  const [groups, setGroups] = useState([]);
+  const [types, setTypes] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
+  const [countries, setCountries] = useState([]);
 
   useEffect(() => {
-    getSession().then(setSession);
+    fetchData();
+  }, [filters]);
+
+  useEffect(() => {
+    fetchFilterOptions();
   }, []);
 
-  return (
-    <div className="container py-5">
-      <h1 className="text-center mb-4">Welcome to Bliss Finance Dashboard</h1>
+  async function fetchData() {
+    try {
+      const res = await axios.get(`/api/analytics`, {
+        params: {
+          view: filters.view,
+          currency: filters.currency,
+          startMonth: filters.startMonth,
+          endMonth: filters.endMonth,
+        },
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_SECRET}`
+        }
+      });
+      setData(res.data.data);
+    } catch (error) {
+      console.error("Error fetching analytics data:", error);
+    }
+  }
 
-      {/* Embedded BLISS Assistant */}
-      <div className="card mb-5 p-4 shadow-sm">
-        <SimpleChat />
+  async function fetchFilterOptions() {
+    try {
+      const [accountRes, categoryRes] = await Promise.all([
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/accounts`, {
+          headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_SECRET}` },
+        }),
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/categories`, {
+          headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_SECRET}` },
+        })
+      ]);
+
+      setGroups([...new Set(categoryRes.data.map(cat => cat.group))]);
+      setTypes([...new Set(categoryRes.data.map(cat => cat.type))]);
+      setCurrencies([...new Set(accountRes.data.map(acc => acc.currency))]);
+      setCountries([...new Set(accountRes.data.map(acc => acc.country))]);
+    } catch (err) {
+      console.error("Error fetching filter options:", err);
+    }
+  }
+
+  const sortedKeys = Object.keys(data).sort((a, b) => new Date(a) - new Date(b));
+
+  const EXPENSE_TYPES = ["Life Expenses", "Housing & Utilities", "Personal Development"];
+
+  const currencySymbols = {
+    USD: "$",
+    EUR: "€",
+    BRL: "R$"
+  };
+
+  const chartData = sortedKeys.map(key => {
+    let total = 0;
+    for (const item of data[key]) {
+      if (
+        (!filters.group || item.group === filters.group) &&
+        (!filters.type || item.type === filters.type) &&
+        (!filters.country || item.country === filters.country)
+      ) {
+        const value = EXPENSE_TYPES.includes(item.type) ? -item.balance : item.balance;
+        total += value;
+      }
+    }
+    return { date: key, balance: total };
+  });
+
+  return (
+    <div className="container mt-5" style={{ maxWidth: "900px" }}>
+      <h1 className="text-center fw-bold mb-4" style={{ fontFamily: 'Urbanist, sans-serif', color: '#1e3a8a' }}>dashboard</h1>
+
+      {/* Filters */}
+      <div className="row g-3 mb-4">
+        <div className="col-md-3">
+          <label className="form-label">Group</label>
+          <select className="form-select" value={filters.group} onChange={(e) => setFilters({ ...filters, group: e.target.value })}>
+            <option value="">All</option>
+            {groups.map((g, idx) => <option key={idx} value={g}>{g}</option>)}
+          </select>
+        </div>
+        <div className="col-md-3">
+          <label className="form-label">Type</label>
+          <select className="form-select" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
+            <option value="">All</option>
+            {types.map((t, idx) => <option key={idx} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div className="col-md-3">
+          <label className="form-label">Currency</label>
+          <select className="form-select" value={filters.currency} onChange={(e) => setFilters({ ...filters, currency: e.target.value })}>
+            <option value="">All</option>
+            {currencies.map((c, idx) => <option key={idx} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div className="col-md-3">
+          <label className="form-label">Country</label>
+          <select className="form-select" value={filters.country} onChange={(e) => setFilters({ ...filters, country: e.target.value })}>
+            <option value="">All</option>
+            {countries.map((c, idx) => <option key={idx} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div className="col-md-3">
+          <label className="form-label">Start Month</label>
+          <input type="month" className="form-control" value={filters.startMonth} onChange={(e) => setFilters({ ...filters, startMonth: e.target.value })} />
+        </div>
+        <div className="col-md-3">
+          <label className="form-label">End Month</label>
+          <input type="month" className="form-control" value={filters.endMonth} onChange={(e) => setFilters({ ...filters, endMonth: e.target.value })} />
+        </div>
       </div>
 
-      {/* Main Navigation Buttons */}
-      <div className="row g-4">
-        <div className="col-md-3 d-grid">
-          <Link href="/transactions" className="btn btn-outline-primary">
-            💰 Transactions
-          </Link>
-        </div>
-        <div className="col-md-3 d-grid">
-          <Link href="/accounts" className="btn btn-outline-success">
-            🏦 Accounts
-          </Link>
-        </div>
-        <div className="col-md-3 d-grid">
-          <Link href="/categories" className="btn btn-outline-info">
-            🏷️ Categories
-          </Link>
-        </div>
-        <div className="col-md-3 d-grid">
-          <Link href="/portfolio" className="btn btn-outline-dark">
-            📈 Portfolio
-          </Link>
-        </div>
-        <div className="col-md-3 d-grid">
-          <Link href="/pnl" className="btn btn-outline-warning">
-            📊 P&L
-          </Link>
-        </div>
-        <div className="col-md-3 d-grid">
-          <Link href="/dashboard" className="btn btn-outline-secondary">
-            📉 Dashboard
-          </Link>
-        </div>
-        <div className="col-md-3 d-grid">
-          <Link href="/currency" className="btn btn-outline-danger">
-            💱 Currency Rates
-          </Link>
-        </div>
-        <div className="col-md-3 d-grid">
-          <Link href="/assistant" className="btn btn-outline-primary">
-            🤖 BLISS Assistant
-          </Link>
-        </div>
+      {/* Graph */}
+      <div className="card p-4 shadow">
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip formatter={(value) => `${currencySymbols[filters.currency] || ''}${Math.round(value).toLocaleString()}`} />
+            <Legend />
+            <Line type="monotone" dataKey="balance" stroke="#1e3a8a" strokeWidth={2} />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

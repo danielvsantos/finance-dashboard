@@ -23,7 +23,7 @@ export default function AppLayout(props) {
     {
       title: "Analytics",
       items: [
-        { name: "📉 Dashboard", href: "/dashboard" },
+        { name: "📉 Dashboard", href: "/" },
         { name: "📊 P&L", href: "/pnl" },
         { name: "📈 Portfolio", href: "/portfolio" }
       ]
