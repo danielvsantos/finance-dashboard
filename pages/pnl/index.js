@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import PnLTable from "../../components/pnltable";
+import PnLTable from "../../components/PnLTable";
 
 export default function PnLPage() {
   const [view, setView] = useState("year");
